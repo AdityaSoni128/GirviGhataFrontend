@@ -1,0 +1,74 @@
+<div class="card">
+  <label class="label">Customer</label>
+
+  @if (selected(); as c) {
+    <div
+      class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border border-brand-200 rounded-md p-3 bg-brand-50"
+    >
+      <div class="min-w-0">
+        <p class="text-sm font-medium text-brand-900 truncate">{{ c.fullName }}</p>
+        <p class="text-xs text-gray-500 truncate">{{ c.customerCode }} • {{ c.mobile }}</p>
+      </div>
+      <button
+        type="button"
+        (click)="changeCustomer()"
+        class="btn-secondary text-sm shrink-0 w-full sm:w-auto"
+      >
+        Change Customer
+      </button>
+    </div>
+  } @else if (mode() === 'create') {
+    <div class="border border-gray-200 rounded-md p-3 sm:p-4">
+      <div class="flex items-center justify-between mb-3">
+        <p class="text-sm font-semibold text-gray-600">New Customer</p>
+        <button type="button" (click)="cancelCreate()" class="text-xs text-gray-500 hover:underline">
+          Cancel
+        </button>
+      </div>
+      <app-customer-form [embedded]="true" (created)="onCustomerCreated($event)"></app-customer-form>
+    </div>
+  } @else {
+    <div class="space-y-3">
+      <input
+        type="text"
+        placeholder="Search by name, mobile, or customer code…"
+        class="input-field"
+        [ngModel]="query()"
+        (ngModelChange)="onQueryChange($event)"
+      />
+
+      <div class="border border-gray-200 rounded-md divide-y divide-gray-100 max-h-64 overflow-y-auto">
+        @for (customer of results(); track customer.id) {
+          <button
+            type="button"
+            (click)="selectCustomer(customer)"
+            class="w-full text-left px-3 py-2.5 hover:bg-brand-50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-0.5 sm:gap-3 min-w-0"
+          >
+            <span class="text-sm text-brand-900 truncate min-w-0">{{ customer.fullName }}</span>
+            <span class="text-xs text-gray-500 truncate shrink-0 sm:max-w-[45%]">
+              {{ customer.customerCode }} • {{ customer.mobile }}
+            </span>
+          </button>
+        } @empty {
+          <div class="px-3 py-6 text-center text-sm text-gray-400">
+            @if (loading()) {
+              Loading customers…
+            } @else if (errorMessage()) {
+              {{ errorMessage() }}
+            } @else if (searched()) {
+              No customers found.
+            }
+          </div>
+        }
+      </div>
+
+      <div class="text-center">
+        <span class="text-xs text-gray-400">or</span>
+      </div>
+
+      <button type="button" (click)="showCreateForm()" class="btn-secondary w-full sm:w-auto">
+        + New Customer
+      </button>
+    </div>
+  }
+</div>

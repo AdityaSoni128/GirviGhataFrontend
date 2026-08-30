@@ -1,0 +1,236 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body {
+  height: 100%;
+}
+body {
+  margin: 0;
+  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  background-color: rgb(var(--background));
+  color: rgb(var(--text));
+}
+
+/* ============================================================
+   THEME TOKENS
+   Each theme sets the same variable set; components never
+   reference a theme name directly, only these tokens (via the
+   Tailwind color aliases in tailwind.config.js). Adding a 7th
+   theme = adding one more [data-theme="..."] block here.
+   Values are space-separated RGB triples for Tailwind's
+   rgb(var(--x) / <alpha-value>) opacity support.
+   ============================================================ */
+
+/* Theme 1 — Royal Gold + Charcoal (default) */
+:root,
+[data-theme='royal-gold'] {
+  --brand-50: 250 248 245;
+  --brand-100: 240 233 224;
+  --brand-200: 224 208 184;
+  --brand-300: 199 172 132;
+  --brand-400: 176 143 92;
+  --brand-500: 154 118 66;
+  --brand-600: 122 92 48;
+  --brand-700: 92 68 34;
+  --brand-800: 58 44 26;
+  --brand-900: 26 24 22;
+  --gold-400: 232 196 106;
+  --gold-500: 212 168 50;
+  --gold-600: 179 137 31;
+  --background: 250 247 243;
+  --surface: 255 255 255;
+  --surface-hover: 245 240 232;
+  --text: 31 26 23;
+  --text-muted: 107 99 92;
+  --border: 224 216 204;
+  --success: 22 163 74;
+  --warning: 217 119 6;
+  --danger: 220 38 38;
+  --sidebar: 26 24 22;
+  --sidebar-text: 240 233 224;
+  --input-bg: 255 255 255;
+  --table-header: 245 240 232;
+}
+
+/* Theme 2 — Navy + Gold */
+[data-theme='navy-gold'] {
+  --brand-50: 240 244 250;
+  --brand-100: 219 230 245;
+  --brand-200: 179 199 227;
+  --brand-300: 130 157 199;
+  --brand-400: 82 113 163;
+  --brand-500: 47 76 122;
+  --brand-600: 30 54 92;
+  --brand-700: 20 40 71;
+  --brand-800: 13 28 52;
+  --brand-900: 8 18 36;
+  --gold-400: 232 196 106;
+  --gold-500: 205 164 52;
+  --gold-600: 173 133 30;
+  --background: 246 248 251;
+  --surface: 255 255 255;
+  --surface-hover: 234 240 248;
+  --text: 17 24 39;
+  --text-muted: 100 111 130;
+  --border: 210 220 235;
+  --success: 21 128 61;
+  --warning: 202 138 4;
+  --danger: 185 28 28;
+  --sidebar: 8 18 36;
+  --sidebar-text: 219 230 245;
+  --input-bg: 255 255 255;
+  --table-header: 234 240 248;
+}
+
+/* Theme 3 — Emerald + Cream */
+[data-theme='emerald-cream'] {
+  --brand-50: 246 250 246;
+  --brand-100: 226 240 228;
+  --brand-200: 188 219 194;
+  --brand-300: 138 190 152;
+  --brand-400: 90 158 114;
+  --brand-500: 51 128 82;
+  --brand-600: 33 102 62;
+  --brand-700: 24 79 48;
+  --brand-800: 18 58 36;
+  --brand-900: 12 40 25;
+  --gold-400: 224 190 110;
+  --gold-500: 200 160 60;
+  --gold-600: 168 130 36;
+  --background: 250 247 240;
+  --surface: 255 253 248;
+  --surface-hover: 240 245 238;
+  --text: 26 31 27;
+  --text-muted: 96 104 96;
+  --border: 214 224 210;
+  --success: 22 163 74;
+  --warning: 202 138 4;
+  --danger: 200 40 40;
+  --sidebar: 24 79 48;
+  --sidebar-text: 236 246 238;
+  --input-bg: 255 255 255;
+  --table-header: 240 245 238;
+}
+
+/* Theme 4 — Burgundy + Champagne */
+[data-theme='burgundy-champagne'] {
+  --brand-50: 250 244 244;
+  --brand-100: 240 222 222;
+  --brand-200: 222 182 184;
+  --brand-300: 191 132 136;
+  --brand-400: 154 82 88;
+  --brand-500: 118 42 50;
+  --brand-600: 94 30 38;
+  --brand-700: 74 22 29;
+  --brand-800: 54 16 21;
+  --brand-900: 36 11 14;
+  --gold-400: 222 196 140;
+  --gold-500: 198 168 104;
+  --gold-600: 168 138 74;
+  --background: 250 245 238;
+  --surface: 255 251 245;
+  --surface-hover: 244 233 224;
+  --text: 41 27 26;
+  --text-muted: 120 100 96;
+  --border: 228 210 204;
+  --success: 30 130 76;
+  --warning: 190 130 20;
+  --danger: 176 42 42;
+  --sidebar: 74 22 29;
+  --sidebar-text: 240 222 222;
+  --input-bg: 255 255 255;
+  --table-header: 244 233 224;
+}
+
+/* Theme 5 — Slate + Indigo (gold intentionally muted — SaaS/dashboard feel) */
+[data-theme='slate-indigo'] {
+  --brand-50: 245 246 250;
+  --brand-100: 228 231 240;
+  --brand-200: 199 204 223;
+  --brand-300: 158 166 195;
+  --brand-400: 110 120 163;
+  --brand-500: 75 85 138;
+  --brand-600: 60 68 128;
+  --brand-700: 47 53 108;
+  --brand-800: 34 39 82;
+  --brand-900: 22 25 46;
+  --gold-400: 196 186 150;
+  --gold-500: 176 164 128;
+  --gold-600: 148 136 104;
+  --background: 244 245 248;
+  --surface: 255 255 255;
+  --surface-hover: 235 237 244;
+  --text: 24 27 38;
+  --text-muted: 100 106 128;
+  --border: 218 222 233;
+  --success: 22 163 74;
+  --warning: 202 138 4;
+  --danger: 220 38 38;
+  --sidebar: 22 25 46;
+  --sidebar-text: 228 231 240;
+  --input-bg: 255 255 255;
+  --table-header: 235 237 244;
+}
+
+/* Theme 6 — Warm Ivory + Dark Brown */
+[data-theme='warm-ivory'] {
+  --brand-50: 251 248 242;
+  --brand-100: 243 233 216;
+  --brand-200: 226 205 172;
+  --brand-300: 199 168 122;
+  --brand-400: 163 128 85;
+  --brand-500: 122 92 60;
+  --brand-600: 92 68 44;
+  --brand-700: 71 52 34;
+  --brand-800: 52 38 25;
+  --brand-900: 36 26 17;
+  --gold-400: 220 188 120;
+  --gold-500: 196 162 90;
+  --gold-600: 164 132 62;
+  --background: 250 245 234;
+  --surface: 255 252 245;
+  --surface-hover: 244 235 218;
+  --text: 43 33 24;
+  --text-muted: 122 104 84;
+  --border: 228 212 184;
+  --success: 22 140 74;
+  --warning: 190 130 20;
+  --danger: 190 50 40;
+  --sidebar: 52 38 25;
+  --sidebar-text: 243 233 216;
+  --input-bg: 255 255 255;
+  --table-header: 244 235 218;
+}
+
+/* ============================================================
+   SHARED COMPONENT CLASSES
+   Unchanged selectors/usages across the app — only their color
+   sources changed, from hardcoded Tailwind palette + old dark:
+   variants, to the theme tokens above. Every screen using these
+   classes re-themes with zero component-level changes.
+   ============================================================ */
+.card {
+  @apply bg-surface rounded-lg shadow-sm border border-brand-100 p-5;
+}
+.btn-primary {
+  @apply inline-flex items-center justify-center
+    bg-brand-700 hover:bg-brand-800
+    text-white font-medium
+    px-3 py-2 sm:px-4
+    text-sm sm:text-base
+    rounded-md transition-colors
+    disabled:opacity-50 disabled:cursor-not-allowed;
+}
+.btn-secondary {
+  @apply bg-surface hover:bg-surface-hover text-brand-800 border border-brand-300 font-medium px-4 py-2 rounded-md transition-colors disabled:opacity-50;
+}
+.input-field {
+  @apply w-full border border-brand-200 bg-input-bg rounded-md px-3 py-2 text-sm text-text focus:outline-none focus:ring-2 focus:ring-gold-500 focus:border-transparent;
+}
+.label {
+  @apply block text-sm font-medium text-text-muted mb-1;
+}
+.badge {
+  @apply inline-block px-2 py-0.5 rounded-full text-xs font-medium;
+}

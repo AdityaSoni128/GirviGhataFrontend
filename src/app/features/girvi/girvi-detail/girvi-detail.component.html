@@ -1,0 +1,328 @@
+@if (transaction(); as t) {
+  <div class="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto">
+    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-6">
+      <div>
+        <h2 class="text-xl font-semibold text-brand-900 font-mono break-all">{{ t.girviNumber }}</h2>
+        <h2 class="text-xl font-semibold text-brand-900 font-mono break-all">{{ t.customer?.fullName }}</h2>
+        <span class="badge mt-1" [class]="statusClass(t.status)">{{ t.status }}</span>
+      </div>
+      <div class="text-left sm:text-right text-sm text-gray-500">
+        <p>Pledged: {{ t.pledgeDate | date: 'mediumDate' }}</p>
+        @if (t.dueDate) {
+          <p>Due: {{ t.dueDate | date: 'mediumDate' }}</p>
+        }
+        <a [routerLink]="['/girvi', t.id, 'receipt']" class="text-brand-700 hover:underline text-xs">Print Receipt</a>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+      <!-- Pledge Valuation (immutable) -->
+      <div class="card">
+        <h3 class="text-sm font-semibold text-gray-600 mb-3">Pledge Valuation (frozen at pledge time)</h3>
+        @if (t.valuation; as v) {
+          <dl class="text-sm space-y-1">
+            <div class="flex justify-between"><dt class="text-gray-500">Total Fine Weight</dt><dd>{{ v.totalFineWeight }} g</dd></div>
+            <div class="flex justify-between"><dt class="text-gray-500">Metal Value</dt><dd>₹{{ v.totalMetalValue }}</dd></div>
+            <div class="flex justify-between"><dt class="text-gray-500">Eligibility</dt><dd>{{ v.eligibilityPercent }}%</dd></div>
+            <div class="flex justify-between"><dt class="text-gray-500">Eligible Value</dt><dd>₹{{ v.eligibleValue }}</dd></div>
+            <div class="flex justify-between"><dt class="text-gray-500">Margin Applied</dt><dd>₹{{ v.marginApplied }}</dd></div>
+            <div class="flex justify-between">
+              <dt class="text-gray-500">Interest Rate</dt>
+              <dd class="font-medium text-brand-800">{{ v.interestPercent | number: '1.2-2' }}% per month</dd>
+            </div>
+            <div class="flex justify-between font-semibold text-brand-800">
+              <dt>Original Loan Amount</dt><dd>₹{{ v.actualLoanAmount }}</dd>
+            </div>
+          </dl>
+        }
+        @if (t.customerSignatureUrl) {
+          <div class="mt-3 pt-3 border-t border-gray-100">
+            <p class="text-xs text-gray-500 mb-1">Customer Signature</p>
+            <img [src]="t.customerSignatureUrl" alt="Customer signature" class="max-w-full h-16 object-contain border border-gray-100 rounded bg-white" />
+          </div>
+        }
+      </div>
+
+      <!-- Current Valuation (informational, live) -->
+      <div class="card">
+        <h3 class="text-sm font-semibold text-gray-600 mb-3">Current Valuation (today's rate — informational only)</h3>
+        @if (currentValuation(); as cv) {
+          <dl class="text-sm space-y-1">
+            @for (rateEntry of cv.currentValuation.rates | keyvalue; track rateEntry.key) {
+              <div class="flex justify-between"><dt class="text-gray-500">Current {{ rateEntry.key }} Rate</dt><dd>₹{{ rateEntry.value }}/g</dd></div>
+            }
+            <div class="flex justify-between"><dt class="text-gray-500">Current Fine Weight</dt><dd>{{ cv.currentValuation.totalFineWeight }} g</dd></div>
+            <div class="flex justify-between"><dt class="text-gray-500">Current Metal Value</dt><dd>₹{{ cv.currentValuation.totalMetalValue }}</dd></div>
+            <div class="flex justify-between"><dt class="text-gray-500">Current Eligible Value</dt><dd>₹{{ cv.currentValuation.currentEligibleValue }}</dd></div>
+            <div class="flex justify-between font-semibold text-brand-800">
+              <dt>Current Max Loan Amount</dt><dd>₹{{ cv.currentValuation.currentMaxLoanAmount }}</dd>
+            </div>
+          </dl>
+          <p class="text-xs text-gray-400 mt-2">This never changes the approved loan amount — for reference during redemption/settlement discussions only.</p>
+        } @else {
+          <p class="text-sm text-gray-400">Not available (loan closed, or rates/rules not configured).</p>
+        }
+      </div>
+    </div>
+
+    <!-- Outstanding -->
+    <div class="card mb-6">
+      <h3 class="text-sm font-semibold text-gray-600 mb-3">Current Outstanding</h3>
+      @if (outstanding(); as o) {
+        <dl class="grid grid-cols-2 sm:grid-cols-4 gap-y-2 text-sm">
+          <div><dt class="text-gray-500">Principal</dt><dd>₹{{ o.principal }}</dd></div>
+          <div><dt class="text-gray-500">Interest Accrued</dt><dd>₹{{ o.interestAccrued }}</dd></div>
+          <div><dt class="text-gray-500">Charges</dt><dd>₹{{ o.charges }}</dd></div>
+          <div class="font-semibold text-brand-800"><dt>Total Outstanding</dt><dd>₹{{ o.totalOutstanding }}</dd></div>
+        </dl>
+      } @else {
+        <p class="text-sm text-gray-400">Loan is closed — no outstanding balance.</p>
+      }
+    </div>
+
+    <!-- Top-Up Loan -->
+    @if (canTopUp && isOpenStatus(t.status)) {
+      <div class="card mb-6">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="text-sm font-semibold text-gray-600">Top-Up Loan</h3>
+          <button type="button" (click)="toggleTopUpForm()" class="text-sm text-brand-700 hover:underline">
+            {{ showTopUpForm() ? 'Cancel' : '+ Top Up Loan' }}
+          </button>
+        </div>
+
+        @if (showTopUpForm()) {
+          <form [formGroup]="topUpForm" (ngSubmit)="submitTopUp()" class="space-y-3">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="label">Top-Up Amount (₹)</label>
+                <input type="number" class="input-field" formControlName="amount" />
+              </div>
+              <div>
+                <label class="label">Top-Up Date</label>
+                <input type="date" class="input-field" formControlName="topUpDate" [max]="today" [min]="t.pledgeDate | date: 'yyyy-MM-dd'" />
+                <p class="text-xs text-gray-400 mt-1">Can be backdated for historical entry, never before the pledge date.</p>
+              </div>
+            </div>
+
+            <div>
+              <label class="label">Apply previous interest start date to Top-Up?</label>
+              <div class="flex flex-col sm:flex-row gap-2 sm:gap-4">
+                <label class="text-sm flex items-center gap-2">
+                  <input type="radio" formControlName="applyPreviousInterestStartDate" value="yes" />
+                  Yes — use the original pledge date ({{ t.pledgeDate | date: 'mediumDate' }})
+                </label>
+                <label class="text-sm flex items-center gap-2">
+                  <input type="radio" formControlName="applyPreviousInterestStartDate" value="no" />
+                  No — start interest from the Top-Up Date
+                </label>
+              </div>
+            </div>
+
+            @if (topUpError()) {
+              <p class="text-sm text-red-600">{{ topUpError() }}</p>
+            }
+
+            <button type="submit" class="btn-primary w-full sm:w-auto" [disabled]="topUpForm.invalid || topUpSaving()">
+              {{ topUpSaving() ? 'Saving…' : 'Confirm Top-Up' }}
+            </button>
+          </form>
+        }
+
+        @if (t.topUps && t.topUps.length) {
+          <div class="mt-4 pt-4 border-t border-gray-100 overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="text-left text-xs uppercase text-gray-500">
+                <tr>
+                  <th class="pr-4 py-1 whitespace-nowrap">Date</th>
+                  <th class="pr-4 py-1 whitespace-nowrap">Amount</th>
+                  <th class="pr-4 py-1 whitespace-nowrap">Interest Anchor</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (tu of t.topUps; track tu.id) {
+                  <tr class="border-t border-gray-50">
+                    <td class="pr-4 py-1 whitespace-nowrap">{{ tu.topUpDate | date: 'mediumDate' }}</td>
+                    <td class="pr-4 py-1 whitespace-nowrap">₹{{ tu.amount }}</td>
+                    <td class="pr-4 py-1 whitespace-nowrap">{{ tu.applyPreviousInterestStartDate ? 'Original pledge date' : 'Top-up date' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Items -->
+    <div class="card !p-0 overflow-hidden mb-6">
+      <h3 class="text-sm font-semibold text-gray-600 px-4 pt-4 pb-2">Pledged Items</h3>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-brand-50 text-left text-xs uppercase text-gray-500">
+            <tr>
+              <th class="px-3 sm:px-4 py-2 whitespace-nowrap">Type</th>
+              <th class="px-3 sm:px-4 py-2 whitespace-nowrap">Metal</th>
+              <th class="px-3 sm:px-4 py-2 whitespace-nowrap">Purity</th>
+              <th class="px-3 sm:px-4 py-2 whitespace-nowrap">Gross Wt</th>
+              <th class="px-3 sm:px-4 py-2 whitespace-nowrap">Net Wt</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of t.items; track item.id) {
+              <tr class="border-t border-gray-100">
+                <td class="px-3 sm:px-4 py-2">{{ item.itemType }}</td>
+                <td class="px-3 sm:px-4 py-2">{{ item.metalCode }}</td>
+                <td class="px-3 sm:px-4 py-2">{{ item.purityCode }}</td>
+                <td class="px-3 sm:px-4 py-2 whitespace-nowrap">{{ item.grossWeight }} g</td>
+                <td class="px-3 sm:px-4 py-2 whitespace-nowrap">{{ item.netWeight }} g</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Payments -->
+    @if (canReceivePayment && outstanding()) {
+      <div class="card mb-6">
+        <h3 class="text-sm font-semibold text-gray-600 mb-3">Record a Payment</h3>
+        <form [formGroup]="paymentForm" (ngSubmit)="recordPayment()" class="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-wrap gap-3 lg:items-end">
+          <div>
+            <label class="label">Amount (₹)</label>
+            <input type="number" class="input-field lg:w-32" formControlName="amount" />
+          </div>
+          <div>
+            <label class="label">Payment Date</label>
+            <input type="date" class="input-field lg:w-40" formControlName="paymentDate" [max]="today" />
+          </div>
+          <div>
+            <label class="label">Mode</label>
+            <select class="input-field lg:w-32" formControlName="mode">
+              <option value="CASH">Cash</option>
+              <option value="UPI">UPI</option>
+              <option value="BANK">Bank</option>
+              <option value="OTHER">Other</option>
+            </select>
+          </div>
+          <div>
+            <label class="label">Reference No.</label>
+            <input class="input-field lg:w-40" formControlName="referenceNumber" />
+          </div>
+          <div class="sm:col-span-2 lg:col-span-1">
+            <button type="submit" class="btn-primary w-full lg:w-auto" [disabled]="paymentForm.invalid || paymentSaving()">
+              {{ paymentSaving() ? 'Saving…' : 'Record Payment' }}
+            </button>
+          </div>
+        </form>
+        @if (paymentError()) {
+          <p class="text-sm text-red-600 mt-2">{{ paymentError() }}</p>
+        }
+      </div>
+    }
+
+    @if (canRedeem && outstanding()?.totalOutstanding === '0') {
+      <div class="card mb-6 border-green-300">
+        <p class="text-sm text-green-700 mb-3">Outstanding balance is fully cleared. This loan can now be redeemed.</p>
+        <button (click)="redeem()" class="btn-primary w-full sm:w-auto" [disabled]="redeeming()">
+          {{ redeeming() ? 'Redeeming…' : 'Redeem & Release Item' }}
+        </button>
+        @if (redeemError()) {
+          <p class="text-sm text-red-600 mt-2">{{ redeemError() }}</p>
+        }
+      </div>
+    }
+
+    <!-- Payment history with reversal -->
+    @if (t.payments && t.payments.length) {
+      <div class="card !p-0 overflow-hidden mb-6">
+        <h3 class="text-sm font-semibold text-gray-600 px-4 pt-4 pb-2">Payment History</h3>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-brand-50 text-left text-xs uppercase text-gray-500">
+              <tr>
+                <th class="px-3 sm:px-4 py-2 whitespace-nowrap">Receipt No.</th>
+                <th class="px-3 sm:px-4 py-2 whitespace-nowrap">Amount</th>
+                <th class="px-3 sm:px-4 py-2 whitespace-nowrap">Mode</th>
+                <th class="px-3 sm:px-4 py-2 whitespace-nowrap">Payment Date</th>
+                <th class="px-3 sm:px-4 py-2 whitespace-nowrap">Status</th>
+                <th class="px-3 sm:px-4 py-2"></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (p of t.payments; track p.id) {
+                <tr class="border-t border-gray-100">
+                  <td class="px-3 sm:px-4 py-2 font-mono text-xs whitespace-nowrap">{{ p.receiptNumber }}</td>
+                  <td class="px-3 sm:px-4 py-2 whitespace-nowrap">₹{{ p.amount }}</td>
+                  <td class="px-3 sm:px-4 py-2 whitespace-nowrap">{{ p.mode }}</td>
+                  <td class="px-3 sm:px-4 py-2 whitespace-nowrap">
+                    {{ p.paymentDate | date: 'mediumDate' }}
+                    <div class="text-xs text-gray-400">entered {{ p.createdAt | date: 'short' }}</div>
+                  </td>
+                  <td class="px-3 sm:px-4 py-2 whitespace-nowrap">{{ p.isReversed ? 'Reversed' : 'Active' }}</td>
+                  <td class="px-3 sm:px-4 py-2 text-right whitespace-nowrap">
+                    @if (canCancelPayment && !p.isReversed) {
+                      <button
+                        (click)="reversePayment(p)"
+                        class="text-xs text-red-600 hover:underline p-1"
+                        [disabled]="reversingId() === p.id"
+                      >
+                        {{ reversingId() === p.id ? 'Reversing…' : 'Reverse' }}
+                      </button>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+    <!-- Auction workflow -->
+    @if (canManageAuction && (t.status === 'OVERDUE' || t.status === 'AUCTION_ELIGIBLE' || t.status === 'AUCTIONED')) {
+      <div class="card mb-6 border-amber-300">
+        <h3 class="text-sm font-semibold text-gray-600 mb-3">Auction Workflow</h3>
+        <p class="text-xs text-gray-400 mb-3">
+          Each step below is explicit — nothing here happens automatically. Steps must be completed in order:
+          Notice → Eligible → Schedule → Record Sale → Close.
+        </p>
+        <div class="flex flex-wrap gap-2 mb-3">
+          <button class="btn-secondary text-sm" (click)="sendAuctionNotice()" [disabled]="auctionBusy()">
+            1. Send Notice
+          </button>
+          <button class="btn-secondary text-sm" (click)="markAuctionEligible()" [disabled]="auctionBusy()">
+            2. Mark Eligible
+          </button>
+          <button class="btn-secondary text-sm" (click)="scheduleAuction()" [disabled]="auctionBusy()">
+            3. Schedule
+          </button>
+          <button class="btn-secondary text-sm" (click)="closeAuctionCase()" [disabled]="auctionBusy()">
+            5. Close Case
+          </button>
+        </div>
+
+        <form [formGroup]="saleForm" (ngSubmit)="recordAuctionSale()" class="flex flex-col sm:flex-row gap-3 sm:items-end flex-wrap">
+          <div>
+            <label class="label">4. Final Sale Amount (₹)</label>
+            <input type="number" class="input-field sm:w-40" formControlName="finalSaleAmount" />
+          </div>
+          <div>
+            <label class="label">Buyer Name</label>
+            <input class="input-field sm:w-48" formControlName="buyerName" />
+          </div>
+          <button type="submit" class="btn-secondary text-sm w-full sm:w-auto" [disabled]="saleForm.invalid || auctionBusy()">
+            Record Sale
+          </button>
+        </form>
+
+        @if (auctionMessage()) {
+          <p class="text-sm text-red-600 mt-2">{{ auctionMessage() }}</p>
+        }
+      </div>
+    }
+  </div>
+} @else if (loading()) {
+  <p class="p-8 text-gray-500">Loading transaction…</p>
+} @else {
+  <p class="p-8 text-red-600">Transaction not found.</p>
+}
