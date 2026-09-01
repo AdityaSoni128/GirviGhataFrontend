@@ -8,7 +8,7 @@ export interface Customer {
   customerCode: string;
   fullName: string;
   guardianName?: string | null;
-  mobile: string;
+  mobile?: string;
   altMobile?: string | null;
   addressLine1?: string | null;
   city?: string | null;

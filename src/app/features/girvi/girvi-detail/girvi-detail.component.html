@@ -14,57 +14,7 @@
         <a [routerLink]="['/girvi', t.id, 'receipt']" class="text-brand-700 hover:underline text-xs">Print Receipt</a>
       </div>
     </div>
-
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
-      <!-- Pledge Valuation (immutable) -->
-      <div class="card">
-        <h3 class="text-sm font-semibold text-gray-600 mb-3">Pledge Valuation (frozen at pledge time)</h3>
-        @if (t.valuation; as v) {
-          <dl class="text-sm space-y-1">
-            <div class="flex justify-between"><dt class="text-gray-500">Total Fine Weight</dt><dd>{{ v.totalFineWeight }} g</dd></div>
-            <div class="flex justify-between"><dt class="text-gray-500">Metal Value</dt><dd>₹{{ v.totalMetalValue }}</dd></div>
-            <div class="flex justify-between"><dt class="text-gray-500">Eligibility</dt><dd>{{ v.eligibilityPercent }}%</dd></div>
-            <div class="flex justify-between"><dt class="text-gray-500">Eligible Value</dt><dd>₹{{ v.eligibleValue }}</dd></div>
-            <div class="flex justify-between"><dt class="text-gray-500">Margin Applied</dt><dd>₹{{ v.marginApplied }}</dd></div>
-            <div class="flex justify-between">
-              <dt class="text-gray-500">Interest Rate</dt>
-              <dd class="font-medium text-brand-800">{{ v.interestPercent | number: '1.2-2' }}% per month</dd>
-            </div>
-            <div class="flex justify-between font-semibold text-brand-800">
-              <dt>Original Loan Amount</dt><dd>₹{{ v.actualLoanAmount }}</dd>
-            </div>
-          </dl>
-        }
-        @if (t.customerSignatureUrl) {
-          <div class="mt-3 pt-3 border-t border-gray-100">
-            <p class="text-xs text-gray-500 mb-1">Customer Signature</p>
-            <img [src]="t.customerSignatureUrl" alt="Customer signature" class="max-w-full h-16 object-contain border border-gray-100 rounded bg-white" />
-          </div>
-        }
-      </div>
-
-      <!-- Current Valuation (informational, live) -->
-      <div class="card">
-        <h3 class="text-sm font-semibold text-gray-600 mb-3">Current Valuation (today's rate — informational only)</h3>
-        @if (currentValuation(); as cv) {
-          <dl class="text-sm space-y-1">
-            @for (rateEntry of cv.currentValuation.rates | keyvalue; track rateEntry.key) {
-              <div class="flex justify-between"><dt class="text-gray-500">Current {{ rateEntry.key }} Rate</dt><dd>₹{{ rateEntry.value }}/g</dd></div>
-            }
-            <div class="flex justify-between"><dt class="text-gray-500">Current Fine Weight</dt><dd>{{ cv.currentValuation.totalFineWeight }} g</dd></div>
-            <div class="flex justify-between"><dt class="text-gray-500">Current Metal Value</dt><dd>₹{{ cv.currentValuation.totalMetalValue }}</dd></div>
-            <div class="flex justify-between"><dt class="text-gray-500">Current Eligible Value</dt><dd>₹{{ cv.currentValuation.currentEligibleValue }}</dd></div>
-            <div class="flex justify-between font-semibold text-brand-800">
-              <dt>Current Max Loan Amount</dt><dd>₹{{ cv.currentValuation.currentMaxLoanAmount }}</dd>
-            </div>
-          </dl>
-          <p class="text-xs text-gray-400 mt-2">This never changes the approved loan amount — for reference during redemption/settlement discussions only.</p>
-        } @else {
-          <p class="text-sm text-gray-400">Not available (loan closed, or rates/rules not configured).</p>
-        }
-      </div>
-    </div>
-
+    
     <!-- Outstanding -->
     <div class="card mb-6">
       <h3 class="text-sm font-semibold text-gray-600 mb-3">Current Outstanding</h3>
@@ -182,57 +132,7 @@
       </div>
     </div>
 
-    <!-- Payments -->
-    @if (canReceivePayment && outstanding()) {
-      <div class="card mb-6">
-        <h3 class="text-sm font-semibold text-gray-600 mb-3">Record a Payment</h3>
-        <form [formGroup]="paymentForm" (ngSubmit)="recordPayment()" class="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-wrap gap-3 lg:items-end">
-          <div>
-            <label class="label">Amount (₹)</label>
-            <input type="number" class="input-field lg:w-32" formControlName="amount" />
-          </div>
-          <div>
-            <label class="label">Payment Date</label>
-            <input type="date" class="input-field lg:w-40" formControlName="paymentDate" [max]="today" />
-          </div>
-          <div>
-            <label class="label">Mode</label>
-            <select class="input-field lg:w-32" formControlName="mode">
-              <option value="CASH">Cash</option>
-              <option value="UPI">UPI</option>
-              <option value="BANK">Bank</option>
-              <option value="OTHER">Other</option>
-            </select>
-          </div>
-          <div>
-            <label class="label">Reference No.</label>
-            <input class="input-field lg:w-40" formControlName="referenceNumber" />
-          </div>
-          <div class="sm:col-span-2 lg:col-span-1">
-            <button type="submit" class="btn-primary w-full lg:w-auto" [disabled]="paymentForm.invalid || paymentSaving()">
-              {{ paymentSaving() ? 'Saving…' : 'Record Payment' }}
-            </button>
-          </div>
-        </form>
-        @if (paymentError()) {
-          <p class="text-sm text-red-600 mt-2">{{ paymentError() }}</p>
-        }
-      </div>
-    }
-
-    @if (canRedeem && outstanding()?.totalOutstanding === '0') {
-      <div class="card mb-6 border-green-300">
-        <p class="text-sm text-green-700 mb-3">Outstanding balance is fully cleared. This loan can now be redeemed.</p>
-        <button (click)="redeem()" class="btn-primary w-full sm:w-auto" [disabled]="redeeming()">
-          {{ redeeming() ? 'Redeeming…' : 'Redeem & Release Item' }}
-        </button>
-        @if (redeemError()) {
-          <p class="text-sm text-red-600 mt-2">{{ redeemError() }}</p>
-        }
-      </div>
-    }
-
-    <!-- Payment history with reversal -->
+     <!-- Payment history with reversal -->
     @if (t.payments && t.payments.length) {
       <div class="card !p-0 overflow-hidden mb-6">
         <h3 class="text-sm font-semibold text-gray-600 px-4 pt-4 pb-2">Payment History</h3>
@@ -275,6 +175,107 @@
             </tbody>
           </table>
         </div>
+      </div>
+    }
+
+    <!-- Payments -->
+    @if (canReceivePayment && outstanding()) {
+      <div class="card mb-6">
+        <h3 class="text-sm font-semibold text-gray-600 mb-3">Record a Payment</h3>
+        <form [formGroup]="paymentForm" (ngSubmit)="recordPayment()" class="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-wrap gap-3 lg:items-end">
+          <div>
+            <label class="label">Amount (₹)</label>
+            <input type="number" class="input-field lg:w-32" formControlName="amount" />
+          </div>
+          <div>
+            <label class="label">Payment Date</label>
+            <input type="date" class="input-field lg:w-40" formControlName="paymentDate" [max]="today" />
+          </div>
+          <div>
+            <label class="label">Mode</label>
+            <select class="input-field lg:w-32" formControlName="mode">
+              <option value="CASH">Cash</option>
+              <option value="UPI">UPI</option>
+              <option value="BANK">Bank</option>
+              <option value="OTHER">Other</option>
+            </select>
+          </div>
+          <div>
+            <label class="label">Reference No.</label>
+            <input class="input-field lg:w-40" formControlName="referenceNumber" />
+          </div>
+          <div class="sm:col-span-2 lg:col-span-1">
+            <button type="submit" class="btn-primary w-full lg:w-auto" [disabled]="paymentForm.invalid || paymentSaving()">
+              {{ paymentSaving() ? 'Saving…' : 'Record Payment' }}
+            </button>
+          </div>
+        </form>
+        @if (paymentError()) {
+          <p class="text-sm text-red-600 mt-2">{{ paymentError() }}</p>
+        }
+      </div>
+    }
+
+     <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+      <!-- Pledge Valuation (immutable) -->
+      <div class="card">
+        <h3 class="text-sm font-semibold text-gray-600 mb-3">Pledge Valuation (frozen at pledge time)</h3>
+        @if (t.valuation; as v) {
+          <dl class="text-sm space-y-1">
+            <div class="flex justify-between"><dt class="text-gray-500">Total Fine Weight</dt><dd>{{ v.totalFineWeight }} g</dd></div>
+            <div class="flex justify-between"><dt class="text-gray-500">Metal Value</dt><dd>₹{{ v.totalMetalValue }}</dd></div>
+            <div class="flex justify-between"><dt class="text-gray-500">Eligibility</dt><dd>{{ v.eligibilityPercent }}%</dd></div>
+            <div class="flex justify-between"><dt class="text-gray-500">Eligible Value</dt><dd>₹{{ v.eligibleValue }}</dd></div>
+            <div class="flex justify-between"><dt class="text-gray-500">Margin Applied</dt><dd>₹{{ v.marginApplied }}</dd></div>
+            <div class="flex justify-between">
+              <dt class="text-gray-500">Interest Rate</dt>
+              <dd class="font-medium text-brand-800">{{ v.interestPercent | number: '1.2-2' }}% per month</dd>
+            </div>
+            <div class="flex justify-between font-semibold text-brand-800">
+              <dt>Original Loan Amount</dt><dd>₹{{ v.actualLoanAmount }}</dd>
+            </div>
+          </dl>
+        }
+        @if (t.customerSignatureUrl) {
+          <div class="mt-3 pt-3 border-t border-gray-100">
+            <p class="text-xs text-gray-500 mb-1">Customer Signature</p>
+            <img [src]="t.customerSignatureUrl" alt="Customer signature" class="max-w-full h-16 object-contain border border-gray-100 rounded bg-white" />
+          </div>
+        }
+      </div>
+
+      <!-- Current Valuation (informational, live) -->
+      <div class="card">
+        <h3 class="text-sm font-semibold text-gray-600 mb-3">Current Valuation (today's rate — informational only)</h3>
+        @if (currentValuation(); as cv) {
+          <dl class="text-sm space-y-1">
+            @for (rateEntry of cv.currentValuation.rates | keyvalue; track rateEntry.key) {
+              <div class="flex justify-between"><dt class="text-gray-500">Current {{ rateEntry.key }} Rate</dt><dd>₹{{ rateEntry.value }}/g</dd></div>
+            }
+            <div class="flex justify-between"><dt class="text-gray-500">Current Fine Weight</dt><dd>{{ cv.currentValuation.totalFineWeight }} g</dd></div>
+            <div class="flex justify-between"><dt class="text-gray-500">Current Metal Value</dt><dd>₹{{ cv.currentValuation.totalMetalValue }}</dd></div>
+            <div class="flex justify-between"><dt class="text-gray-500">Current Eligible Value</dt><dd>₹{{ cv.currentValuation.currentEligibleValue }}</dd></div>
+            <div class="flex justify-between font-semibold text-brand-800">
+              <dt>Current Max Loan Amount</dt><dd>₹{{ cv.currentValuation.currentMaxLoanAmount }}</dd>
+            </div>
+          </dl>
+          <p class="text-xs text-gray-400 mt-2">This never changes the approved loan amount — for reference during redemption/settlement discussions only.</p>
+        } @else {
+          <p class="text-sm text-gray-400">Not available (loan closed, or rates/rules not configured).</p>
+        }
+      </div>
+    </div>
+
+
+    @if (canRedeem && outstanding()?.totalOutstanding === '0') {
+      <div class="card mb-6 border-green-300">
+        <p class="text-sm text-green-700 mb-3">Outstanding balance is fully cleared. This loan can now be redeemed.</p>
+        <button (click)="redeem()" class="btn-primary w-full sm:w-auto" [disabled]="redeeming()">
+          {{ redeeming() ? 'Redeeming…' : 'Redeem & Release Item' }}
+        </button>
+        @if (redeemError()) {
+          <p class="text-sm text-red-600 mt-2">{{ redeemError() }}</p>
+        }
       </div>
     }
 

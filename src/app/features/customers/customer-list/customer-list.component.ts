@@ -40,7 +40,7 @@ import { Customer } from '../../../core/models/api-models';
               @for (customer of customers(); track customer.id) {
                 <tr class="border-t border-gray-100 hover:bg-brand-50 cursor-pointer" (click)="openCustomer(customer.id)">
                 <td class="px-3 sm:px-4 py-3 max-w-[140px] sm:max-w-none truncate">{{ customer.fullName }}</td>
-                <td class="px-3 sm:px-4 py-3 whitespace-nowrap">{{ customer.mobile }}</td>
+                <td class="px-3 sm:px-4 py-3 whitespace-nowrap">{{ customer.mobile || '—'}}</td>
                 <td class="px-3 sm:px-4 py-3 whitespace-nowrap">{{ customer.city || '—' }}</td>
                 <td class="px-3 sm:px-4 py-3 font-mono text-xs whitespace-nowrap">{{ customer.customerCode }}</td>
                 </tr>

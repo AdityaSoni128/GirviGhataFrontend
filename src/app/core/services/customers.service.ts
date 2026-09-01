@@ -7,7 +7,7 @@ import { Customer, PaginatedResult } from '../models/api-models';
 export interface CreateCustomerPayload {
   fullName: string;
   guardianName?: string;
-  mobile: string;
+  mobile?: string;
   altMobile?: string;
   addressLine1?: string;
   city?: string;

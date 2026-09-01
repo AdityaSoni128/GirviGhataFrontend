@@ -26,7 +26,7 @@ import { Customer } from '../../../core/models/api-models';
             <input class="input-field" formControlName="guardianName" />
           </div>
           <div>
-            <label class="label">Mobile *</label>
+            <label class="label">Mobile</label>
             <input class="input-field" formControlName="mobile" />
           </div>
           <div>
@@ -98,7 +98,7 @@ export class CustomerFormComponent {
     this.form = this.fb.group({
     fullName: ['', Validators.required],
     guardianName: [''],
-    mobile: ['', [Validators.required, Validators.minLength(10)]],
+    mobile: ['', [Validators.minLength(10)]],
     altMobile: [''],
     addressLine1: [''],
     city: ['',[Validators.required]],
@@ -118,7 +118,7 @@ export class CustomerFormComponent {
     const payload = {
       fullName: value.fullName!,
       guardianName: value.guardianName || undefined,
-      mobile: value.mobile!,
+      mobile: value.mobile || undefined,
       altMobile: value.altMobile || undefined,
       addressLine1: value.addressLine1 || undefined,
       city: value.city || undefined,
