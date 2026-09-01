@@ -1,7 +1,17 @@
 import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, tap } from 'rxjs';
+import {
+  catchError,
+  finalize,
+  map,
+  Observable,
+  of,
+  shareReplay,
+  tap,
+  throwError,
+} from 'rxjs';
+
 import { environment } from '../../../environments/environment';
 import { AuthTokens } from '../models/api-models';
 
@@ -18,9 +28,15 @@ const REFRESH_TOKEN_KEY = 'girvi_refresh_token';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  /** Reactive signal so components (e.g. the layout's nav) can react to login/logout. */
   readonly isAuthenticated = signal<boolean>(this.hasValidToken());
   readonly permissions = signal<string[]>(this.currentPermissions());
+
+  /**
+   * Shared refresh operation.
+   *
+   * At most one POST /auth/refresh request can be in flight at a time.
+   */
+  private refreshInFlight$: Observable<AuthTokens> | null = null;
 
   constructor(
     private readonly http: HttpClient,
@@ -28,23 +44,102 @@ export class AuthService {
   ) {}
 
   login(email: string, password: string): Observable<AuthTokens> {
-    return this.http.post<AuthTokens>(`${environment.apiBaseUrl}/auth/login`, { email, password }).pipe(
-      tap((tokens) => this.storeTokens(tokens)),
-    );
+    return this.http
+      .post<AuthTokens>(
+        `${environment.apiBaseUrl}/auth/login`,
+        { email, password },
+      )
+      .pipe(
+        tap((tokens) => this.storeTokens(tokens)),
+      );
   }
 
   refresh(): Observable<AuthTokens> {
-    const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
-    return this.http
-      .post<AuthTokens>(`${environment.apiBaseUrl}/auth/refresh`, { refreshToken })
-      .pipe(tap((tokens) => this.storeTokens(tokens)));
+    if (this.refreshInFlight$) {
+      return this.refreshInFlight$;
+    }
+
+    const refreshToken = this.getRefreshToken();
+
+    if (!refreshToken) {
+      return throwError(() => new Error('No refresh token available'));
+    }
+
+    const request$ = this.http
+      .post<AuthTokens>(
+        `${environment.apiBaseUrl}/auth/refresh`,
+        { refreshToken },
+      )
+      .pipe(
+        tap((tokens) => this.storeTokens(tokens)),
+        finalize(() => {
+          this.refreshInFlight$ = null;
+        }),
+      );
+
+    this.refreshInFlight$ = request$.pipe(
+      shareReplay({
+        bufferSize: 1,
+        refCount: false,
+      }),
+    );
+
+    return this.refreshInFlight$;
   }
 
+  /**
+   * Runs once during application startup.
+   *
+   * Valid access token:
+   *   restore state and continue.
+   *
+   * Expired access token + valid refresh token:
+   *   silently refresh and continue.
+   *
+   * Invalid/expired refresh token:
+   *   clear auth state and continue as unauthenticated.
+   */
+ initializeAuth(): Observable<boolean> {
+  const accessToken = this.getAccessToken();
+  const refreshToken = this.getRefreshToken();
+
+  // No existing session
+  if (!accessToken && !refreshToken) {
+    this.clearAuthState();
+    return of(false);
+  }
+
+  // Access token is still valid
+  if (accessToken && this.hasValidToken()) {
+    this.restoreAuthState();
+    return of(true);
+  }
+
+  // Access token is expired and refresh token doesn't exist
+  if (!refreshToken) {
+    this.clearAuthState();
+    return of(false);
+  }
+
+  // Access token expired, try silent refresh
+  return this.refresh().pipe(
+    tap(() => {
+      this.restoreAuthState();
+    }),
+
+    // AuthTokens -> boolean
+    map(() => true),
+
+    // Invalid/expired/revoked refresh token
+    catchError(() => {
+      this.clearAuthState();
+      return of(false);
+    }),
+  );
+}
+
   logout(): void {
-    localStorage.removeItem(ACCESS_TOKEN_KEY);
-    localStorage.removeItem(REFRESH_TOKEN_KEY);
-    this.isAuthenticated.set(false);
-    this.permissions.set([]);
+    this.clearAuthState();
     this.router.navigate(['/login']);
   }
 
@@ -63,32 +158,70 @@ export class AuthService {
   private storeTokens(tokens: AuthTokens): void {
     localStorage.setItem(ACCESS_TOKEN_KEY, tokens.accessToken);
     localStorage.setItem(REFRESH_TOKEN_KEY, tokens.refreshToken);
+
     this.isAuthenticated.set(true);
     this.permissions.set(this.currentPermissions());
   }
 
+  private restoreAuthState(): void {
+    const token = this.getAccessToken();
+
+    if (!token) {
+      this.clearAuthState();
+      return;
+    }
+
+    const decoded = this.decode(token);
+
+    if (!decoded || decoded.exp * 1000 <= Date.now()) {
+      this.clearAuthState();
+      return;
+    }
+
+    this.isAuthenticated.set(true);
+    this.permissions.set(decoded.permissions ?? []);
+  }
+
+  private clearAuthState(): void {
+    localStorage.removeItem(ACCESS_TOKEN_KEY);
+    localStorage.removeItem(REFRESH_TOKEN_KEY);
+
+    this.isAuthenticated.set(false);
+    this.permissions.set([]);
+  }
+
   private hasValidToken(): boolean {
     const token = this.getAccessToken();
-    if (!token) return false;
+
+    if (!token) {
+      return false;
+    }
+
     const decoded = this.decode(token);
+
     return !!decoded && decoded.exp * 1000 > Date.now();
   }
 
   private currentPermissions(): string[] {
     const token = this.getAccessToken();
     const decoded = token ? this.decode(token) : null;
+
     return decoded?.permissions ?? [];
   }
 
-  /** Minimal base64url JWT payload decode — no signature verification here,
-   * that's the backend's job. This is purely for UI state (nav visibility,
-   * expiry check) and must never be treated as a trust boundary. */
   private decode(token: string): DecodedAccessToken | null {
     try {
       const payload = token.split('.')[1];
-      const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
-      const json = atob(normalized);
-      return JSON.parse(json);
+
+      if (!payload) {
+        return null;
+      }
+
+      const normalized = payload
+        .replace(/-/g, '+')
+        .replace(/_/g, '/');
+
+      return JSON.parse(atob(normalized));
     } catch {
       return null;
     }

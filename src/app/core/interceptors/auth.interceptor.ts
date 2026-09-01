@@ -1,37 +1,120 @@
-import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
+import {
+  HttpContextToken,
+  HttpErrorResponse,
+  HttpInterceptorFn,
+} from '@angular/common/http';
+
 import { inject } from '@angular/core';
-import { catchError, switchMap, throwError } from 'rxjs';
+
+import {
+  catchError,
+  switchMap,
+  throwError,
+} from 'rxjs';
+
 import { AuthService } from '../services/auth.service';
 
 /**
- * Functional interceptor (Angular 15+ style). Attaches the access token to
- * every request; on a 401 it attempts exactly one silent refresh-and-retry
- * before giving up and forcing logout — never an infinite retry loop.
+ * Marks a request that has already been retried after token refresh.
+ *
+ * This prevents:
+ *
+ * 401
+ *   -> refresh
+ *   -> retry
+ *   -> 401
+ *   -> refresh
+ *   -> retry
+ *   -> ...
+ *
+ * The request gets only one refresh/retry opportunity.
  */
+const AUTH_RETRIED = new HttpContextToken<boolean>(() => false);
+
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthService);
-  const token = auth.getAccessToken();
 
-  const authedReq = token
-    ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
+  const isLoginEndpoint = req.url.includes('/auth/login');
+  const isRefreshEndpoint = req.url.includes('/auth/refresh');
+
+  const isAuthEndpoint = isLoginEndpoint || isRefreshEndpoint;
+
+  const hasAlreadyRetried = req.context.get(AUTH_RETRIED);
+
+  const accessToken = auth.getAccessToken();
+
+  const authenticatedRequest = accessToken
+    ? req.clone({
+        setHeaders: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      })
     : req;
 
-  return next(authedReq).pipe(
+  return next(authenticatedRequest).pipe(
     catchError((error: HttpErrorResponse) => {
-      const isAuthEndpoint = req.url.includes('/auth/login') || req.url.includes('/auth/refresh');
-      if (error.status === 401 && !isAuthEndpoint && auth.getRefreshToken()) {
-        return auth.refresh().pipe(
-          switchMap((tokens) => {
-            const retried = req.clone({ setHeaders: { Authorization: `Bearer ${tokens.accessToken}` } });
-            return next(retried);
-          }),
-          catchError((refreshError) => {
-            auth.logout();
-            return throwError(() => refreshError);
-          }),
-        );
+      /**
+       * Login and refresh requests must never trigger another refresh.
+       */
+      if (isAuthEndpoint) {
+        return throwError(() => error);
       }
-      return throwError(() => error);
+
+      /**
+       * A retried request must not start another refresh cycle.
+       */
+      if (hasAlreadyRetried) {
+        if (error.status === 401) {
+          auth.logout();
+        }
+
+        return throwError(() => error);
+      }
+
+      /**
+       * Only 401 responses can trigger token refresh.
+       *
+       * If there is no refresh token, there is no session to recover.
+       */
+      if (error.status !== 401 || !auth.getRefreshToken()) {
+        return throwError(() => error);
+      }
+
+      /**
+       * AuthService.refresh() is single-flight.
+       *
+       * If A/B/C all reach this point simultaneously:
+       *
+       * A -> refresh()
+       * B -> same refresh observable
+       * C -> same refresh observable
+       *
+       * Only ONE HTTP refresh request is sent.
+       */
+      return auth.refresh().pipe(
+        switchMap((tokens) => {
+          const retriedRequest = req.clone({
+            context: req.context.set(AUTH_RETRIED, true),
+            setHeaders: {
+              Authorization: `Bearer ${tokens.accessToken}`,
+            },
+          });
+
+          return next(retriedRequest);
+        }),
+
+        catchError((refreshError) => {
+          /**
+           * Refresh failure means the refresh token is invalid,
+           * expired, revoked, or otherwise unusable.
+           *
+           * Clear the client session and redirect to login.
+           */
+          auth.logout();
+
+          return throwError(() => refreshError);
+        }),
+      );
     }),
   );
 };
