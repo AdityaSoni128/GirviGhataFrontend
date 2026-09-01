@@ -217,6 +217,28 @@
     }
 
      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+
+       <!-- Current Valuation (informational, live) -->
+      <div class="card">
+        <h3 class="text-sm font-semibold text-gray-600 mb-3">Current Valuation (today's rate — informational only)</h3>
+        @if (currentValuation(); as cv) {
+          <dl class="text-sm space-y-1">
+            @for (rateEntry of cv.currentValuation.rates | keyvalue; track rateEntry.key) {
+              <div class="flex justify-between"><dt class="text-gray-500">Current {{ rateEntry.key }} Rate</dt><dd>₹{{ rateEntry.value }}/g</dd></div>
+            }
+            <div class="flex justify-between"><dt class="text-gray-500">Current Fine Weight</dt><dd>{{ cv.currentValuation.totalFineWeight }} g</dd></div>
+            <div class="flex justify-between"><dt class="text-gray-500">Current Metal Value</dt><dd>₹{{ cv.currentValuation.totalMetalValue }}</dd></div>
+            <div class="flex justify-between"><dt class="text-gray-500">Current Eligible Value</dt><dd>₹{{ cv.currentValuation.currentEligibleValue }}</dd></div>
+            <div class="flex justify-between font-semibold text-brand-800">
+              <dt>Current Max Loan Amount</dt><dd>₹{{ cv.currentValuation.currentMaxLoanAmount }}</dd>
+            </div>
+          </dl>
+          <p class="text-xs text-gray-400 mt-2">This never changes the approved loan amount — for reference during redemption/settlement discussions only.</p>
+        } @else {
+          <p class="text-sm text-gray-400">Not available (loan closed, or rates/rules not configured).</p>
+        }
+      </div>
+
       <!-- Pledge Valuation (immutable) -->
       <div class="card">
         <h3 class="text-sm font-semibold text-gray-600 mb-3">Pledge Valuation (frozen at pledge time)</h3>
@@ -244,26 +266,6 @@
         }
       </div>
 
-      <!-- Current Valuation (informational, live) -->
-      <div class="card">
-        <h3 class="text-sm font-semibold text-gray-600 mb-3">Current Valuation (today's rate — informational only)</h3>
-        @if (currentValuation(); as cv) {
-          <dl class="text-sm space-y-1">
-            @for (rateEntry of cv.currentValuation.rates | keyvalue; track rateEntry.key) {
-              <div class="flex justify-between"><dt class="text-gray-500">Current {{ rateEntry.key }} Rate</dt><dd>₹{{ rateEntry.value }}/g</dd></div>
-            }
-            <div class="flex justify-between"><dt class="text-gray-500">Current Fine Weight</dt><dd>{{ cv.currentValuation.totalFineWeight }} g</dd></div>
-            <div class="flex justify-between"><dt class="text-gray-500">Current Metal Value</dt><dd>₹{{ cv.currentValuation.totalMetalValue }}</dd></div>
-            <div class="flex justify-between"><dt class="text-gray-500">Current Eligible Value</dt><dd>₹{{ cv.currentValuation.currentEligibleValue }}</dd></div>
-            <div class="flex justify-between font-semibold text-brand-800">
-              <dt>Current Max Loan Amount</dt><dd>₹{{ cv.currentValuation.currentMaxLoanAmount }}</dd>
-            </div>
-          </dl>
-          <p class="text-xs text-gray-400 mt-2">This never changes the approved loan amount — for reference during redemption/settlement discussions only.</p>
-        } @else {
-          <p class="text-sm text-gray-400">Not available (loan closed, or rates/rules not configured).</p>
-        }
-      </div>
     </div>
 
 
