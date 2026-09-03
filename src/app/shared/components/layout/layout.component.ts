@@ -1,13 +1,24 @@
-import { Component, signal } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { RatesService } from '../../../core/services/rates-reports.service';
 import { ThemeMenuComponent } from '../theme-menu/theme-menu.component';
+import { RateReminderModalComponent } from '../rate-reminder-modal/rate-reminder-modal.component';
 
 @Component({
   selector: 'app-layout',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, RouterOutlet, ThemeMenuComponent],
+  imports: [RouterLink, RouterLinkActive, RouterOutlet, ThemeMenuComponent, RateReminderModalComponent],
   template: `
+    @if (showRateReminder()) {
+      <app-rate-reminder-modal
+        [staleMetalNames]="staleMetalNames()"
+        (updateNow)="goUpdateRates()"
+        (dismiss)="showRateReminder.set(false)"
+      ></app-rate-reminder-modal>
+    }
+
     <div class="flex h-screen bg-background overflow-hidden">
       @if (mobileMenuOpen()) {
         <div class="fixed inset-0 bg-black/40 z-30 md:hidden" (click)="closeMobileMenu()"></div>
@@ -81,10 +92,50 @@ import { ThemeMenuComponent } from '../theme-menu/theme-menu.component';
     `,
   ],
 })
-export class LayoutComponent {
+export class LayoutComponent implements OnInit {
   readonly mobileMenuOpen = signal(false);
+  readonly showRateReminder = signal(false);
+  readonly staleMetalNames = signal('');
 
-  constructor(private readonly auth: AuthService) {}
+  constructor(
+    private readonly auth: AuthService,
+    private readonly ratesService: RatesService,
+    private readonly router: Router,
+  ) {}
+
+  ngOnInit(): void {
+    // LayoutComponent is mounted once per authenticated session (it wraps
+    // every authenticated route via router-outlet and isn't re-created on
+    // in-app navigation), so this check runs once after login/session
+    // restore — not on every route change or API call (Edge case: avoid
+    // repeated popups).
+    //
+    // Only nag users who can actually do something about it. The backend
+    // stays the source of truth either way; this just decides whether to
+    // surface it as a blocking popup for this user.
+    if (!this.auth.hasPermission('rate:change')) {
+      return;
+    }
+
+    this.ratesService.status().subscribe({
+      next: (status) => {
+        if (!status.upToDate) {
+          this.staleMetalNames.set(status.staleMetals.map((m) => m.name).join(', '));
+          this.showRateReminder.set(true);
+        }
+      },
+      error: () => {
+        // Rates API/DB temporarily unavailable (Edge case 6): fail silent
+        // rather than blocking the user with a popup we can't actually
+        // back up, and never assume "unavailable" means "up to date".
+      },
+    });
+  }
+
+  goUpdateRates(): void {
+    this.showRateReminder.set(false);
+    this.router.navigate(['/settings/rates']);
+  }
 
   toggleMobileMenu(): void {
     this.mobileMenuOpen.update((v) => !v);

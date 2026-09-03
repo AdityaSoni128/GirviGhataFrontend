@@ -18,6 +18,19 @@ export interface CreateCustomerPayload {
   panNumber?: string;
 }
 
+export interface UpdateCustomerPayload {
+  fullName?: string;
+  guardianName?: string;
+  /** null explicitly clears the stored mobile number (it's optional/nullable). */
+  mobile?: string | null;
+  altMobile?: string;
+  addressLine1?: string;
+  city?: string;
+  state?: string;
+  pincode?: string;
+  branchId?: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class CustomersService {
   private readonly base = `${environment.apiBaseUrl}/customers`;
@@ -40,7 +53,7 @@ export class CustomersService {
     return this.http.post<Customer>(this.base, payload);
   }
 
-  update(id: string, payload: Partial<CreateCustomerPayload>): Observable<Customer> {
+  update(id: string, payload: UpdateCustomerPayload): Observable<Customer> {
     return this.http.patch<Customer>(`${this.base}/${id}`, payload);
   }
 }

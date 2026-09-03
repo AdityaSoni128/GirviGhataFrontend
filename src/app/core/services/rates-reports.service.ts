@@ -4,6 +4,12 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { DashboardSummary, MetalRate } from '../models/api-models';
 
+export interface RateStatus {
+  upToDate: boolean;
+  asOfDate: string;
+  staleMetals: { code: string; name: string }[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class RatesService {
   private readonly base = `${environment.apiBaseUrl}/rates`;
@@ -20,6 +26,10 @@ export class RatesService {
 
   history(metalCode: string, limit = 50): Observable<unknown[]> {
     return this.http.get<unknown[]>(`${this.base}/history/${metalCode}`, { params: { limit: String(limit) } });
+  }
+
+  status(): Observable<RateStatus> {
+    return this.http.get<RateStatus>(`${this.base}/status`);
   }
 }
 

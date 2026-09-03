@@ -17,12 +17,21 @@ import { AuthService } from '../../../core/services/auth.service';
             <h2 class="text-xl font-semibold text-brand-900">{{ c.fullName }}</h2>
             <p class="text-sm text-gray-500 font-mono">{{ c.customerCode }}</p>
           </div>
-          <a [routerLink]="['/girvi/new']" [queryParams]="{ customerId: c.id }" class="btn-primary">
-            + New Girvi for this customer
-          </a>
-          <a [routerLink]="['/reports/customer-statement', c.id]" class="text-sm text-brand-700 hover:underline block mt-2 text-right">
-            View Statement
-          </a>
+          <div class="flex flex-col items-end gap-2">
+            <div class="flex gap-2">
+              @if (canEdit) {
+                <a [routerLink]="['/customers', c.id, 'edit']" class="btn-secondary">
+                  Edit
+                </a>
+              }
+              <a [routerLink]="['/girvi/new']" [queryParams]="{ customerId: c.id }" class="btn-primary">
+                + New Girvi for this customer
+              </a>
+            </div>
+            <a [routerLink]="['/reports/customer-statement', c.id]" class="text-sm text-brand-700 hover:underline">
+              View Statement
+            </a>
+          </div>
         </div>
 
         <div class="grid grid-cols-2 gap-6 mb-6">
@@ -107,6 +116,7 @@ export class CustomerDetailComponent implements OnInit {
   readonly loading = signal(true);
   readonly unmasked = signal(false);
   readonly canViewFullKyc: boolean;
+  readonly canEdit: boolean;
 
   private customerId!: string;
 
@@ -116,6 +126,7 @@ export class CustomerDetailComponent implements OnInit {
     auth: AuthService,
   ) {
     this.canViewFullKyc = auth.hasPermission('kyc:view_full');
+    this.canEdit = auth.hasPermission('customer:edit');
   }
 
   ngOnInit(): void {

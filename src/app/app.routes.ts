@@ -33,6 +33,11 @@ export const routes: Routes = [
           import('./features/customers/customer-form/customer-form.component').then((m) => m.CustomerFormComponent),
       },
       {
+        path: 'customers/:id/edit',
+        loadComponent: () =>
+          import('./features/customers/customer-form/customer-form.component').then((m) => m.CustomerFormComponent),
+      },
+      {
         path: 'customers/:id',
         loadComponent: () =>
           import('./features/customers/customer-detail/customer-detail.component').then(
