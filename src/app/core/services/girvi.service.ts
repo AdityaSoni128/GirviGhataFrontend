@@ -42,10 +42,21 @@ export class GirviService {
     return this.http.get<GirviTransaction>(`${this.base}/${id}`);
   }
 
-  list(status?: string, page = 1, pageSize = 25): Observable<PaginatedResult<GirviTransaction>> {
+  list(options: {
+    status?: string;
+    search?: string;
+    page?: number;
+    pageSize?: number;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+  } = {}): Observable<PaginatedResult<GirviTransaction>> {
+    const { status, search, page = 1, pageSize = 20, sortBy, sortOrder } = options;
     return this.http.get<PaginatedResult<GirviTransaction>>(this.base, {
       params: {
         ...(status ? { status } : {}),
+        ...(search ? { search } : {}),
+        ...(sortBy ? { sortBy } : {}),
+        ...(sortOrder ? { sortOrder } : {}),
         page: String(page),
         pageSize: String(pageSize),
       },

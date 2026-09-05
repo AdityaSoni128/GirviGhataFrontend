@@ -37,9 +37,21 @@ export class CustomersService {
 
   constructor(private readonly http: HttpClient) {}
 
-  search(q: string, page = 1, pageSize = 25): Observable<PaginatedResult<Customer>> {
+  search(
+    q: string,
+    page = 1,
+    pageSize = 20,
+    sortBy?: string,
+    sortOrder?: 'asc' | 'desc',
+  ): Observable<PaginatedResult<Customer>> {
     return this.http.get<PaginatedResult<Customer>>(this.base, {
-      params: { q, page: String(page), pageSize: String(pageSize) },
+      params: {
+        q,
+        page: String(page),
+        pageSize: String(pageSize),
+        ...(sortBy ? { sortBy } : {}),
+        ...(sortOrder ? { sortOrder } : {}),
+      },
     });
   }
 
