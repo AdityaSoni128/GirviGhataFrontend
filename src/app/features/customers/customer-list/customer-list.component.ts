@@ -12,8 +12,8 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
   standalone: true,
   imports: [CommonModule, RouterLink, FormsModule, PaginationComponent],
   template: `
-    <div class="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto">
-      <div class="flex items-center justify-between mb-6 gap-3">
+    <div class="flex-1 flex flex-col min-h-0 p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto w-full">
+      <div class="flex items-center justify-between mb-6 gap-3 shrink-0">
         <h2 class="text-xl font-semibold text-brand-900">Customers</h2>
         <a routerLink="/customers/new" class="btn-primary shrink-0">+ New Customer</a>
       </div>
@@ -21,13 +21,13 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
       <input
         type="text"
         placeholder="Search by name, mobile, customer code, Aadhaar last-4, or PAN…"
-        class="input-field mb-4"
+        class="input-field mb-4 shrink-0"
         [ngModel]="query()"
         (ngModelChange)="onQueryChange($event)"
       />
 
-      <div class="card !p-0 overflow-hidden">
-        <div class="overflow-x-auto">
+      <div class="card !p-0 overflow-hidden flex-1 min-h-0 flex flex-col">
+        <div class="overflow-x-auto overflow-y-auto flex-1 min-h-0">
           <table class="w-full text-sm">
             <thead class="bg-brand-50 text-left text-xs uppercase text-gray-500">
               <tr>
@@ -57,6 +57,7 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
         </div>
 
         <app-pagination
+          class="shrink-0"
           [page]="page()"
           [pageSize]="pageSize()"
           [total]="total()"
@@ -66,6 +67,25 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
       </div>
     </div>
   `,
+  styles: [
+    `
+      /* CustomerListComponent renders as <app-customer-list>, a sibling of
+       * <router-outlet> inside <main>. Nothing in the template above can
+       * style that host tag — it needs to be an explicit flex item of
+       * main (flex-1) that can also shrink below its content size
+       * (min-height: 0), so the flex-1/min-h-0 chain inside the template
+       * has an actual definite height to resolve against. Without this,
+       * <app-customer-list> sits at height:auto and every flex-1/min-h-0
+       * class inside the template is sizing against nothing. */
+      :host {
+        display: flex;
+        flex-direction: column;
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: hidden;
+      }
+    `,
+  ],
 })
 export class CustomerListComponent {
   readonly customers = signal<Customer[]>([]);
@@ -75,10 +95,7 @@ export class CustomerListComponent {
   readonly pageSize = signal(20);
   readonly total = signal(0);
 
-  /** Raw keystrokes — debounced/deduped before triggering a fetch. */
   private readonly queryText$ = new Subject<string>();
-  /** Fires exactly once per actual fetch: after a debounced search, or
-   * immediately on page/page-size changes (no debounce needed there). */
   private readonly refresh$ = new Subject<void>();
 
   constructor(private readonly customersService: CustomersService,
@@ -86,15 +103,12 @@ export class CustomerListComponent {
   ) {
     this.queryText$.pipe(debounceTime(300), distinctUntilChanged()).subscribe((q) => {
       this.query.set(q);
-      this.page.set(1); // reset to page 1 on every new search
+      this.page.set(1);
       this.refresh$.next();
     });
 
     this.refresh$
       .pipe(
-        // switchMap cancels any in-flight request when a newer one fires,
-        // so a slow response to an earlier search/page can never overwrite
-        // the results of a more recent one.
         switchMap(() => {
           this.loading.set(true);
           return this.customersService.search(this.query(), this.page(), this.pageSize());
@@ -120,7 +134,7 @@ export class CustomerListComponent {
 
   onPageSizeChange(next: number): void {
     this.pageSize.set(next);
-    this.page.set(1); // reset to page 1 on page-size change
+    this.page.set(1);
     this.refresh$.next();
   }
 

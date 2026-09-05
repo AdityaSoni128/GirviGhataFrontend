@@ -71,9 +71,9 @@ import { RateReminderModalComponent } from '../rate-reminder-modal/rate-reminder
           <app-theme-menu placement="bottom" class="text-brand-800 shrink-0"></app-theme-menu>
         </header>
 
-        <main class="flex-1 overflow-y-auto overflow-x-hidden">
-          <router-outlet></router-outlet>
-        </main>
+      <main class="flex-1 flex flex-col min-h-0 overflow-y-auto overflow-x-hidden">
+        <router-outlet></router-outlet>
+      </main>
       </div>
     </div>
   `,

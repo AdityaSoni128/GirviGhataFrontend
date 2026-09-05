@@ -12,13 +12,13 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
   standalone: true,
   imports: [CommonModule, RouterLink, FormsModule, PaginationComponent],
   template: `
-    <div class="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto">
-      <div class="flex items-center justify-between mb-6 gap-3">
+    <div class="flex-1 flex flex-col min-h-0 p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto w-full">
+      <div class="flex items-center justify-between mb-6 gap-3 shrink-0">
         <h2 class="text-xl font-semibold text-brand-900">Girvi Transactions</h2>
         <a routerLink="/girvi/new" class="btn-primary shrink-0">+ New Girvi</a>
       </div>
 
-      <div class="flex flex-col sm:flex-row gap-3 mb-4">
+      <div class="flex flex-col sm:flex-row gap-3 mb-4 shrink-0">
         <input
           type="text"
           placeholder="Search by Girvi No., customer name, or mobile…"
@@ -43,8 +43,8 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
         </select>
       </div>
 
-      <div class="card !p-0 overflow-hidden">
-        <div class="overflow-x-auto">
+      <div class="card !p-0 overflow-hidden flex-1 min-h-0 flex flex-col">
+        <div class="overflow-x-auto overflow-y-auto flex-1 min-h-0">
           <table class="w-full text-sm">
             <thead class="bg-brand-50 text-left text-xs uppercase text-gray-500">
               <tr>
@@ -74,6 +74,7 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
         </div>
 
         <app-pagination
+          class="shrink-0"
           [page]="page()"
           [pageSize]="pageSize()"
           [total]="total()"
@@ -83,6 +84,22 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
       </div>
     </div>
   `,
+  styles: [
+    `
+      /* Same reasoning as CustomerListComponent: GirviListComponent
+       * renders as <app-girvi-list>, a sibling of <router-outlet> inside
+       * <main> (which is flex flex-col min-h-0). Without this, the host
+       * tag has height:auto and every flex-1/min-h-0 class inside the
+       * template above sizes against nothing. */
+      :host {
+        display: flex;
+        flex-direction: column;
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: hidden;
+      }
+    `,
+  ],
 })
 export class GirviListComponent implements OnInit {
   readonly transactions = signal<GirviTransaction[]>([]);
