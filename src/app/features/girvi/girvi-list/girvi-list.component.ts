@@ -48,18 +48,20 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
           <table class="w-full text-sm">
             <thead class="bg-brand-50 text-left text-xs uppercase text-gray-500">
               <tr>
+              <th class="px-3 sm:px-4 py-3">Pledge Date</th>
               <th class="px-3 sm:px-4 py-3">Customer</th>
-              <th class="px-3 sm:px-4 py-3">Status</th>
               <th class="px-3 sm:px-4 py-3 whitespace-nowrap">Loan Amount</th>
+              <th class="px-3 sm:px-4 py-3">Status</th>
               <th class="px-3 sm:px-4 py-3 whitespace-nowrap">Girvi No.</th>
               </tr>
             </thead>
             <tbody>
               @for (t of transactions(); track t.id) {
                 <tr class="border-t border-gray-100 hover:bg-brand-50 cursor-pointer" (click)="openTransaction(t.id)">
+                <td class="px-3 sm:px-4 py-3 font-mono text-xs whitespace-nowrap">{{ t.pledgeDate | date:'dd-MM-yyyy' }}</td>
                 <td class="px-3 sm:px-4 py-3 max-w-[120px] sm:max-w-none truncate">{{ t.customer?.fullName || '—' }}</td>
-                <td class="px-3 sm:px-4 py-3 whitespace-nowrap"><span class="badge" [class]="statusClass(t.status)">{{ t.status }}</span></td>
                 <td class="px-3 sm:px-4 py-3 whitespace-nowrap">₹{{ t.valuation?.actualLoanAmount || '—' }}</td>
+                <td class="px-3 sm:px-4 py-3 whitespace-nowrap"><span class="badge" [class]="statusClass(t.status)">{{ t.status }}</span></td>
                 <td class="px-3 sm:px-4 py-3 font-mono text-xs whitespace-nowrap">{{ t.girviNumber }}</td>
                 </tr>
               } @empty {
