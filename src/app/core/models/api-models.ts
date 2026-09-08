@@ -117,6 +117,7 @@ export interface GirviTransaction {
   valuation: GirviValuation | null;
   payments?: Payment[];
   topUps?: GirviTopUp[];
+  loanAmount: string;
 }
 
 export interface PaymentAllocation {
