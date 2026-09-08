@@ -62,6 +62,7 @@ export class GirviDetailComponent implements OnInit {
       // fully enforced; nothing downstream needed to change since submit
       // is guarded by `if (this.paymentForm.invalid) return;`.
       amount: [null as number | null, [Validators.required, Validators.min(1)]],
+      discountAmount: [null as number | null, [Validators.min(0)]],
       paymentDate: [this.today, Validators.required],
       mode: ['CASH' as 'CASH' | 'UPI' | 'BANK' | 'OTHER', Validators.required],
       referenceNumber: [''],
@@ -135,6 +136,7 @@ export class GirviDetailComponent implements OnInit {
       .receive({
         girviTransactionId: this.girviId,
         amount: String(value.amount),
+        discountAmount: this.paymentForm.value.discountAmount?.toString() || '0',
         mode: value.mode!,
         paymentDate: value.paymentDate || undefined,
         referenceNumber: value.referenceNumber || undefined,

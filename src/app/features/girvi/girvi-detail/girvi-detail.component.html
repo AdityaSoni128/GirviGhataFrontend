@@ -188,6 +188,10 @@
             <input type="number" class="input-field lg:w-32" formControlName="amount" />
           </div>
           <div>
+            <label class="label">Discount (₹)</label>
+            <input type="number" min="0" class="input-field lg:w-32" formControlName="discountAmount" />
+          </div>
+          <div>
             <label class="label">Payment Date</label>
             <input type="date" class="input-field lg:w-40" formControlName="paymentDate" [max]="today" />
           </div>

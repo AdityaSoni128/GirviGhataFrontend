@@ -7,6 +7,7 @@ import { OutstandingSummary, Payment } from '../models/api-models';
 export interface CreatePaymentPayload {
   girviTransactionId: string;
   amount: string;
+  discountAmount : string;
   mode: 'CASH' | 'UPI' | 'BANK' | 'OTHER';
   referenceNumber?: string;
   notes?: string;
