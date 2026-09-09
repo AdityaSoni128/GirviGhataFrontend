@@ -26,6 +26,15 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
           [ngModel]="query()"
           (ngModelChange)="onQueryChange($event)"
         />
+
+        <input
+          type="date"
+          class="input-field w-full sm:w-44"
+          [ngModel]="fromDate()"
+          (ngModelChange)="onFromDateChange($event)"
+          title="Date"
+        />
+
         <select class="input-field w-full sm:w-56" [ngModel]="statusFilter()" (ngModelChange)="onFilterChange($event)">
           <option value="">All statuses</option>
           <option value="ACTIVE">Active</option>
@@ -108,6 +117,7 @@ export class GirviListComponent implements OnInit {
   readonly loading = signal(false);
   readonly statusFilter = signal('');
   readonly query = signal('');
+  readonly fromDate = signal('');
   readonly sortBy = signal<'createdAt' | 'pledgeDate' | 'dueDate'>('createdAt');
   readonly page = signal(1);
   readonly pageSize = signal(20);
@@ -115,6 +125,7 @@ export class GirviListComponent implements OnInit {
 
   /** Raw keystrokes — debounced/deduped before triggering a fetch. */
   private readonly queryText$ = new Subject<string>();
+  private readonly dateChange$ = new Subject<string>();
   /** Fires exactly once per actual fetch: after a debounced search, or
    * immediately on filter/sort/page/page-size changes. */
   private readonly refresh$ = new Subject<void>();
@@ -131,6 +142,20 @@ export class GirviListComponent implements OnInit {
       this.refresh$.next();
     });
 
+    this.dateChange$
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged()
+      )
+      .subscribe((date) => {
+        if (!this.isValidDate(date)) {
+          return;
+        }
+        this.fromDate.set(date);
+        this.page.set(1);
+        this.refresh$.next();
+      });
+      
     this.refresh$
       .pipe(
         // switchMap cancels any in-flight request when a newer one fires,
@@ -141,6 +166,8 @@ export class GirviListComponent implements OnInit {
           return this.girviService.list({
             status: this.statusFilter() || undefined,
             search: this.query() || undefined,
+            fromDate: this.fromDate() || undefined,
+            toDate: this.fromDate() || undefined,
             page: this.page(),
             pageSize: this.pageSize(),
             sortBy: this.sortBy(),
@@ -164,6 +191,34 @@ export class GirviListComponent implements OnInit {
     this.statusFilter.set(status);
     this.page.set(1); // reset to page 1 on filter change
     this.refresh$.next();
+  }
+
+  onFromDateChange(value: string): void {
+    // When date is cleared, immediately clear the date filters
+    // and refresh so the previous date filter is removed.
+    if (!value) {
+      this.fromDate.set('');
+      this.page.set(1);
+      this.refresh$.next();
+      return;
+    }
+
+    this.dateChange$.next(value);
+  }
+
+  private isValidDate(value: string): boolean {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      return false;
+    }
+
+    const date = new Date(`${value}T00:00:00`);
+
+    return (
+      !Number.isNaN(date.getTime()) &&
+      date.getFullYear() === Number(value.substring(0, 4)) &&
+      date.getMonth() + 1 === Number(value.substring(5, 7)) &&
+      date.getDate() === Number(value.substring(8, 10))
+    );
   }
 
   onSortChange(sortBy: 'createdAt' | 'pledgeDate' | 'dueDate'): void {

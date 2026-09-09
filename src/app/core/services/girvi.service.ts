@@ -45,16 +45,30 @@ export class GirviService {
   list(options: {
     status?: string;
     search?: string;
+    fromDate?: string;
+    toDate?: string;
     page?: number;
     pageSize?: number;
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
   } = {}): Observable<PaginatedResult<GirviTransaction>> {
-    const { status, search, page = 1, pageSize = 20, sortBy, sortOrder } = options;
+    const {
+      status,
+      search,
+      fromDate,
+      toDate,
+      page = 1,
+      pageSize = 20,
+      sortBy,
+      sortOrder,
+    } = options;
+
     return this.http.get<PaginatedResult<GirviTransaction>>(this.base, {
       params: {
         ...(status ? { status } : {}),
         ...(search ? { search } : {}),
+        ...(fromDate ? { fromDate } : {}),
+        ...(toDate ? { toDate } : {}),
         ...(sortBy ? { sortBy } : {}),
         ...(sortOrder ? { sortOrder } : {}),
         page: String(page),
