@@ -56,6 +56,7 @@ export class GirviCreateComponent implements OnInit {
    * overwriting their choice (matches "the owner must be able to
    * change this value before creating the Girvi"). */
   readonly interestRateManuallyEdited = signal(false);
+  readonly eligibilityPercentManuallyEdited = signal(false);
 
   readonly signatureDataUrl = signal<string | null>(null);
   readonly signatureError = signal<string | null>(null);
@@ -101,7 +102,9 @@ export class GirviCreateComponent implements OnInit {
         return { metalCode, fineWeight, metalValue, rule: null, eligibleValue: 0, margin: 0, maxLoan: 0 };
       }
 
-      const eligibilityPercent = Number(rule.eligibilityPercent);
+      const eligibilityPercent = Number(
+        this.formSnapshot().eligibilityPercent ?? rule.eligibilityPercent,
+      );
       const eligibleValue = (metalValue * eligibilityPercent) / 100;
       const margin = this.computeMargin(eligibleValue, rule);
       const maxLoan = this.applyPreviewRounding(Math.max(0, eligibleValue - margin), rule.roundingRule);
@@ -145,6 +148,7 @@ export class GirviCreateComponent implements OnInit {
       // bound of 100 is a sanity cap against fat-finger entry (e.g. "400"
       // instead of "4.00"), not a business-meaningful ceiling.
       interestPercent: [null as number | null, [Validators.required, Validators.min(0), Validators.max(100)]],
+      eligibilityPercent: [null as number | null, [Validators.required,Validators.min(0),Validators.max(100)]],
     });
     this.formSnapshot = signal(this.form.getRawValue());
 
@@ -162,6 +166,14 @@ export class GirviCreateComponent implements OnInit {
       const rule = this.activeRules()[this.primaryMetalCode()];
       if (rule) {
         this.form.get('interestPercent')?.setValue(Number(rule.interestPercent), { emitEvent: false });
+      }
+    });
+
+    effect(() => {
+      if (this.eligibilityPercentManuallyEdited()) return;
+      const rule = this.activeRules()[this.primaryMetalCode()];
+      if (rule) {
+        this.form.get('eligibilityPercent')?.setValue(Number(rule.eligibilityPercent),{ emitEvent: false });
       }
     });
   }
@@ -220,6 +232,10 @@ export class GirviCreateComponent implements OnInit {
 
   onInterestRateInput(): void {
     this.interestRateManuallyEdited.set(true);
+  }
+
+  onEligibilityPercentInput(): void {
+    this.eligibilityPercentManuallyEdited.set(true);
   }
 
   addItem(): void {
@@ -325,6 +341,7 @@ export class GirviCreateComponent implements OnInit {
         pledgeDate: value.pledgeDate || undefined,
         customerSignatureUrl: signatureUrl,
         interestPercent: value.interestPercent !== null ? String(value.interestPercent) : undefined,
+        eligibilityPercent: value.eligibilityPercent !== null ? String(value.eligibilityPercent) : undefined,
         items: value.items!.map((i: any) => ({
           itemType: i.itemType,
           metalCode: i.metalCode,

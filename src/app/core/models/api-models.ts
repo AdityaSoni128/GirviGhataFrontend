@@ -23,6 +23,7 @@ export interface Customer {
 }
 
 export interface CustomerTransactionSummary {
+  id: string;
   girviNumber: string;
   status: GirviStatus;
   pledgeDate: string;

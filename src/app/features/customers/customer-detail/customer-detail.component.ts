@@ -1,6 +1,6 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CustomersService } from '../../../core/services/customers.service';
 import { Customer } from '../../../core/models/api-models';
 import { AuthService } from '../../../core/services/auth.service';
@@ -87,7 +87,7 @@ import { AuthService } from '../../../core/services/auth.service';
               </thead>
               <tbody>
                 @for (t of c.transactions; track t.girviNumber) {
-                  <tr class="border-t border-gray-100">
+                  <tr class="border-t border-gray-100" (click)="openTransaction(t.id)">
                     <td class="px-4 py-2 font-mono text-xs">{{ t.girviNumber }}</td>
                     <td class="px-4 py-2">
                       <span class="badge" [class]="statusClass(t.status)">{{ t.status }}</span>
@@ -124,6 +124,7 @@ export class CustomerDetailComponent implements OnInit {
     private readonly route: ActivatedRoute,
     private readonly customersService: CustomersService,
     auth: AuthService,
+    private readonly router: Router
   ) {
     this.canViewFullKyc = auth.hasPermission('kyc:view_full');
     this.canEdit = auth.hasPermission('customer:edit');
@@ -137,6 +138,10 @@ export class CustomerDetailComponent implements OnInit {
   unmaskKyc(): void {
     this.unmasked.set(true);
     this.load(true);
+  }
+
+  openTransaction(id: string): void {
+    this.router.navigate(['/girvi', id]);
   }
 
   statusClass(status: string): string {

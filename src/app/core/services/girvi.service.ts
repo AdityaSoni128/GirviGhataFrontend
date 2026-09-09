@@ -20,6 +20,7 @@ export interface CreateGirviPayload {
   /** Owner-chosen interest rate (%) for this specific Girvi. Optional —
    * server defaults to the active rule's rate when omitted. */
   interestPercent?: string;
+  eligibilityPercent?: string;
 }
 
 export interface CreateTopUpPayload {
