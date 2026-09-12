@@ -55,10 +55,10 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
       <div class="card !p-0 overflow-hidden flex-1 min-h-0 flex flex-col">
         <div class="overflow-x-auto overflow-y-auto flex-1 min-h-0">
           <table class="w-full text-sm">
-            <thead class="bg-brand-50 text-left text-xs uppercase text-gray-500">
+            <thead class="bg-brand-50 text-center text-xs uppercase text-gray-500">
               <tr>
-              <th class="px-3 sm:px-4 py-3">Pledge Date</th>
-              <th class="px-3 sm:px-4 py-3">Customer</th>
+              <th class="px-3 sm:px-4 py-3 whitespace-nowrap">Pledge Date</th>
+              <th class="px-3 sm:px-4 py-3 whitespace-nowrap">Customer</th>
               <th class="px-3 sm:px-4 py-3 whitespace-nowrap">Loan Amount</th>
               <th class="px-3 sm:px-4 py-3 whitespace-nowrap">Pledge Months</th>
               <th class="px-3 sm:px-4 py-3 whitespace-nowrap">Interest Accrued</th>
@@ -67,11 +67,11 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
               <th class="px-3 sm:px-4 py-3 whitespace-nowrap">Girvi No.</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody class="text-center">
               @for (t of transactions(); track t.id) {
                 <tr class="border-t border-gray-100 hover:bg-brand-50 cursor-pointer" (click)="openTransaction(t.id)">
                 <td class="px-3 sm:px-4 py-3 font-mono text-xs whitespace-nowrap">{{ t.pledgeDate | date:'dd-MM-yyyy' }}</td>
-                <td class="px-3 sm:px-4 py-3 max-w-[120px] sm:max-w-none truncate">{{ t.customer?.fullName || '—' }}</td>
+                <td class="px-3 sm:px-4 py-3 whitespace-nowrap">{{ t.customer?.fullName || '—' }}</td>
                 <td class="px-3 sm:px-4 py-3 whitespace-nowrap">₹{{ t.loanAmount || '—' }}</td>
                 <td class="px-3 sm:px-4 py-3 whitespace-nowrap">{{ t?.totalPledgeMonths ?? 0 }}</td>
                 <td class="px-3 sm:px-4 py-3 whitespace-nowrap">
