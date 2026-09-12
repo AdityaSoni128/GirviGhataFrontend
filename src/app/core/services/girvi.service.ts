@@ -26,7 +26,10 @@ export interface CreateGirviPayload {
 export interface CreateTopUpPayload {
   amount: string;
   topUpDate?: string;
-  applyPreviousInterestStartDate: boolean;
+}
+
+export interface UpdatePledgeDatePayload {
+  pledgeDate: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -41,6 +44,16 @@ export class GirviService {
 
   getById(id: string): Observable<GirviTransaction> {
     return this.http.get<GirviTransaction>(`${this.base}/${id}`);
+  }
+
+  updatePledgeDate(
+    id: string,
+    payload: UpdatePledgeDatePayload,
+  ): Observable<GirviTransaction> {
+    return this.http.put<GirviTransaction>(
+      `${this.base}/${id}/pledge-date`,
+      payload,
+    );
   }
 
   list(options: {

@@ -7,11 +7,56 @@
         <span class="badge mt-1" [class]="statusClass(t.status)">{{ t.status }}</span>
       </div>
       <div class="text-left sm:text-right text-sm text-gray-500">
-        <p>Pledged: {{ t.pledgeDate | date: 'mediumDate' }}</p>
-        @if (t.dueDate) {
-          <p>Due: {{ t.dueDate | date: 'mediumDate' }}</p>
+        @if (editingPledgeDate()) {
+        <form [formGroup]="pledgeDateForm" (ngSubmit)="savePledgeDate()" class="mt-1">
+          <label class="text-xs text-gray-500 block mb-1">
+            Pledge Date
+          </label>
+      
+          <div class="flex flex-col sm:flex-row gap-2 sm:justify-end">
+            <input type="date" formControlName="pledgeDate" [max]="today" class="input-field text-sm" />
+      
+            <div class="flex gap-2 justify-end">
+              <button type="submit" class="btn-primary text-xs" [disabled]="pledgeDateForm.invalid || pledgeDateSaving()">
+                {{ pledgeDateSaving() ? 'Saving…' : 'Save' }}
+              </button>
+      
+              <button type="button" class="btn-secondary text-xs" (click)="cancelEditPledgeDate()"
+                [disabled]="pledgeDateSaving()">
+                Cancel
+              </button>
+            </div>
+          </div>
+      
+          @if (pledgeDateError()) {
+          <p class="text-xs text-red-600 mt-1">
+            {{ pledgeDateError() }}
+          </p>
+          }
+        </form>
+        } @else {
+        <div class="flex items-center justify-end gap-2">
+          <p>
+            Pledged: {{ t.pledgeDate | date: 'dd-MM-yyyy' }}
+          </p>
+      
+          @if (canTopUp) {
+          <button type="button" class="text-xs text-brand-700 hover:underline" (click)="startEditPledgeDate()">
+            Edit
+          </button>
+          }
+        </div>
         }
-        <a [routerLink]="['/girvi', t.id, 'receipt']" class="text-brand-700 hover:underline text-xs">Print Receipt</a>
+      
+        @if (t.dueDate) {
+        <p>
+          Due: {{ t.dueDate | date: 'dd-MM-yyyy' }}
+        </p>
+        }
+      
+        <a [routerLink]="['/girvi', t.id, 'receipt']" class="text-brand-700 hover:underline text-xs">
+          Print Receipt
+        </a>
       </div>
     </div>
     
@@ -54,20 +99,6 @@
               </div>
             </div>
 
-            <div>
-              <label class="label">Apply previous interest start date to Top-Up?</label>
-              <div class="flex flex-col sm:flex-row gap-2 sm:gap-4">
-                <label class="text-sm flex items-center gap-2">
-                  <input type="radio" formControlName="applyPreviousInterestStartDate" value="yes" />
-                  Yes — use the original pledge date ({{ t.pledgeDate | date: 'mediumDate' }})
-                </label>
-                <label class="text-sm flex items-center gap-2">
-                  <input type="radio" formControlName="applyPreviousInterestStartDate" value="no" />
-                  No — start interest from the Top-Up Date
-                </label>
-              </div>
-            </div>
-
             @if (topUpError()) {
               <p class="text-sm text-red-600">{{ topUpError() }}</p>
             }
@@ -93,7 +124,7 @@
                   <tr class="border-t border-gray-50">
                     <td class="pr-4 py-1 whitespace-nowrap">{{ tu.topUpDate | date: 'mediumDate' }}</td>
                     <td class="pr-4 py-1 whitespace-nowrap">₹{{ tu.amount }}</td>
-                    <td class="pr-4 py-1 whitespace-nowrap">{{ tu.applyPreviousInterestStartDate ? 'Original pledge date' : 'Top-up date' }}</td>
+                    <td class="pr-4 py-1 whitespace-nowrap">{{ 'Original pledge date' }}</td>
                   </tr>
                 }
               </tbody>

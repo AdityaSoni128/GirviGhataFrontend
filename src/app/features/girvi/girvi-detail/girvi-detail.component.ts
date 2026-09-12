@@ -33,6 +33,10 @@ export class GirviDetailComponent implements OnInit {
   readonly topUpSaving = signal(false);
   readonly topUpError = signal<string | null>(null);
 
+  readonly editingPledgeDate = signal(false);
+  readonly pledgeDateSaving = signal(false);
+  readonly pledgeDateError = signal<string | null>(null);
+
   readonly canReceivePayment: boolean;
   readonly canRedeem: boolean;
   readonly canCancelPayment: boolean;
@@ -44,6 +48,8 @@ export class GirviDetailComponent implements OnInit {
   readonly saleForm;
 
   readonly topUpForm;
+
+  readonly pledgeDateForm;
 
   private girviId!: string;
 
@@ -75,10 +81,12 @@ export class GirviDetailComponent implements OnInit {
     this.topUpForm = this.fb.group({
       amount: [null as number | null, [Validators.required, Validators.min(1)]],
       topUpDate: [this.today, Validators.required],
-      // Radio-style choice, kept as a string ('yes'/'no') for straightforward
-      // template binding, converted to boolean on submit.
-      applyPreviousInterestStartDate: ['yes' as 'yes' | 'no', Validators.required],
     });
+
+    this.pledgeDateForm = this.fb.group({
+      pledgeDate: ['', Validators.required],
+    });
+
     this.canReceivePayment = auth.hasPermission('payment:receive');
     this.canRedeem = auth.hasPermission('item:redeem');
     this.canCancelPayment = auth.hasPermission('payment:cancel');
@@ -93,6 +101,78 @@ export class GirviDetailComponent implements OnInit {
 
   isOpenStatus(status: string): boolean {
     return ['ACTIVE', 'PARTIALLY_PAID', 'OVERDUE', 'RENEWED'].includes(status);
+  }
+
+  startEditPledgeDate(): void {
+    const current = this.transaction();
+
+    if (!current) return;
+
+    const pledgeDate = new Date(current.pledgeDate);
+
+    if (Number.isNaN(pledgeDate.getTime())) {
+      this.pledgeDateError.set('Current pledge date is invalid.');
+      return;
+    }
+
+    const localDate = new Date(
+      pledgeDate.getTime() - pledgeDate.getTimezoneOffset() * 60000,
+    )
+      .toISOString()
+      .slice(0, 10);
+
+    this.pledgeDateForm.reset({
+      pledgeDate: localDate,
+    });
+
+    this.pledgeDateError.set(null);
+    this.editingPledgeDate.set(true);
+  }
+
+  cancelEditPledgeDate(): void {
+    this.editingPledgeDate.set(false);
+    this.pledgeDateSaving.set(false);
+    this.pledgeDateError.set(null);
+  }
+
+  savePledgeDate(): void {
+    if (this.pledgeDateForm.invalid) {
+      this.pledgeDateForm.markAllAsTouched();
+      return;
+    }
+
+    const pledgeDate = this.pledgeDateForm.getRawValue().pledgeDate;
+
+    if (!pledgeDate) {
+      this.pledgeDateError.set('Please select a pledge date.');
+      return;
+    }
+
+    if (pledgeDate > this.today) {
+      this.pledgeDateError.set('Pledge date cannot be in the future.');
+      return;
+    }
+
+    this.pledgeDateSaving.set(true);
+    this.pledgeDateError.set(null);
+
+    this.girviService
+      .updatePledgeDate(this.girviId, {
+        pledgeDate,
+      })
+      .subscribe({
+        next: () => {
+          this.pledgeDateSaving.set(false);
+          this.editingPledgeDate.set(false);
+          this.load();
+        },
+        error: (err) => {
+          this.pledgeDateSaving.set(false);
+          this.pledgeDateError.set(
+            err?.error?.message ?? 'Could not update pledge date.',
+          );
+        },
+      });
   }
 
   toggleTopUpForm(): void {
@@ -110,13 +190,12 @@ export class GirviDetailComponent implements OnInit {
       .topUp(this.girviId, {
         amount: String(value.amount),
         topUpDate: value.topUpDate || undefined,
-        applyPreviousInterestStartDate: value.applyPreviousInterestStartDate === 'yes',
       })
       .subscribe({
         next: () => {
           this.topUpSaving.set(false);
           this.showTopUpForm.set(false);
-          this.topUpForm.reset({ amount: null, topUpDate: this.today, applyPreviousInterestStartDate: 'yes' });
+          this.topUpForm.reset({ amount: null, topUpDate: this.today });
           this.load();
         },
         error: (err) => {

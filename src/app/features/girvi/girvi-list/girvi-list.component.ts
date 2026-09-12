@@ -60,6 +60,9 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
               <th class="px-3 sm:px-4 py-3">Pledge Date</th>
               <th class="px-3 sm:px-4 py-3">Customer</th>
               <th class="px-3 sm:px-4 py-3 whitespace-nowrap">Loan Amount</th>
+              <th class="px-3 sm:px-4 py-3 whitespace-nowrap">Pledge Months</th>
+              <th class="px-3 sm:px-4 py-3 whitespace-nowrap">Interest Accrued</th>
+              <th class="px-3 sm:px-4 py-3 whitespace-nowrap">Interest %</th>
               <th class="px-3 sm:px-4 py-3">Status</th>
               <th class="px-3 sm:px-4 py-3 whitespace-nowrap">Girvi No.</th>
               </tr>
@@ -70,12 +73,19 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
                 <td class="px-3 sm:px-4 py-3 font-mono text-xs whitespace-nowrap">{{ t.pledgeDate | date:'dd-MM-yyyy' }}</td>
                 <td class="px-3 sm:px-4 py-3 max-w-[120px] sm:max-w-none truncate">{{ t.customer?.fullName || '—' }}</td>
                 <td class="px-3 sm:px-4 py-3 whitespace-nowrap">₹{{ t.loanAmount || '—' }}</td>
-                <td class="px-3 sm:px-4 py-3 whitespace-nowrap"><span class="badge" [class]="statusClass(t.status)">{{ t.status }}</span></td>
+                <td class="px-3 sm:px-4 py-3 whitespace-nowrap">{{ t?.totalPledgeMonths ?? 0 }}</td>
+                <td class="px-3 sm:px-4 py-3 whitespace-nowrap">
+                  ₹{{ t?.interestAccrued ?? '0' }}
+                </td>
+                <td class="px-3 sm:px-4 py-3 whitespace-nowrap">{{ t?.interestPercent ?? '—' }}%</td>
+                <td class="px-3 sm:px-4 py-3 whitespace-nowrap">
+                  <span class="badge" [class]="statusClass(t.status)">{{ t.status }}</span>
+                </td>
                 <td class="px-3 sm:px-4 py-3 font-mono text-xs whitespace-nowrap">{{ t.girviNumber }}</td>
                 </tr>
               } @empty {
                 <tr>
-                  <td colspan="5" class="px-4 py-8 text-center text-gray-400">
+                  <td colspan="8" class="px-4 py-8 text-center text-gray-400">
                     {{ loading() ? 'Loading…' : 'No transactions found.' }}
                   </td>
                 </tr>

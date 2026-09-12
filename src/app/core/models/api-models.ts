@@ -78,7 +78,6 @@ export interface GirviTopUp {
   id: string;
   amount: string;
   topUpDate: string;
-  applyPreviousInterestStartDate: boolean;
   createdAt: string;
 }
 
@@ -119,6 +118,9 @@ export interface GirviTransaction {
   payments?: Payment[];
   topUps?: GirviTopUp[];
   loanAmount: string;
+  totalPledgeMonths: number;
+  interestPercent: string | number;
+  interestAccrued: string | number;
 }
 
 export interface PaymentAllocation {
