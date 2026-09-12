@@ -4,11 +4,12 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CustomersService } from '../../../core/services/customers.service';
 import { Customer } from '../../../core/models/api-models';
 import { AuthService } from '../../../core/services/auth.service';
+import { DateOnlyPipe } from '../../../shared/pipes/date-only.pipe';
 
 @Component({
   selector: 'app-customer-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, DateOnlyPipe],
   template: `
     @if (customer(); as c) {
       <div class="p-8 max-w-4xl mx-auto">
@@ -76,25 +77,24 @@ import { AuthService } from '../../../core/services/auth.service';
           <h3 class="text-sm font-semibold text-gray-600 px-4 pt-4 pb-2">Girvi Transactions</h3>
           <div class="overflow-x-auto">
             <table class="w-full text-sm">
-              <thead class="bg-brand-50 text-left text-xs uppercase text-gray-500">
-                <tr>
-                  <th class="px-4 py-2">Girvi No.</th>
-                  <th class="px-4 py-2">Status</th>
-                  <th class="px-4 py-2">Pledge Date</th>
-                  <th class="px-4 py-2">Loan Amount</th>
-                  <th class="px-4 py-2">Total Paid</th>
+              <thead class="bg-brand-50 text-center text-xs uppercase text-gray-500">                <tr>
+                  <th class="px-4 py-2 whitespace-nowrap">Girvi No.</th>
+                  <th class="px-4 py-2 whitespace-nowrap">Status</th>
+                  <th class="px-4 py-2 whitespace-nowrap">Pledge Date</th>
+                  <th class="px-4 py-2 whitespace-nowrap">Loan Amount</th>
+                  <th class="px-4 py-2 whitespace-nowrap">Total Paid</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody class="text-center">
                 @for (t of c.transactions; track t.girviNumber) {
                   <tr class="border-t border-gray-100" (click)="openTransaction(t.id)">
-                    <td class="px-4 py-2 font-mono text-xs">{{ t.girviNumber }}</td>
-                    <td class="px-4 py-2">
+                    <td class="px-4 py-2 whitespace-nowrap font-mono text-xs">{{ t.girviNumber }}</td>
+                    <td class="px-4 py-2 whitespace-nowrap">
                       <span class="badge" [class]="statusClass(t.status)">{{ t.status }}</span>
                     </td>
-                    <td class="px-4 py-2">{{ t.pledgeDate | date: 'mediumDate' }}</td>
-                    <td class="px-4 py-2">₹{{ t.loanAmount }}</td>
-                    <td class="px-4 py-2">₹{{ t.totalPaid | number: '1.0-2' }}</td>
+                    <td class="px-4 py-2 whitespace-nowrap">{{ t.pledgeDate | dateOnly }}</td>
+                    <td class="px-4 py-2 whitespace-nowrap">₹{{ t.loanAmount }}</td>
+                    <td class="px-4 py-2 whitespace-nowrap">₹{{ t.totalPaid | number: '1.0-2' }}</td>
                   </tr>
                 } @empty {
                   <tr><td colspan="5" class="px-4 py-6 text-center text-gray-400">No transactions yet.</td></tr>

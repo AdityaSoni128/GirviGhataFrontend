@@ -7,11 +7,12 @@ import { PaymentsService, RedemptionService } from '../../../core/services/payme
 import { AuctionService } from '../../../core/services/auction.service';
 import { CurrentValuationResponse, GirviTransaction, OutstandingSummary, Payment } from '../../../core/models/api-models';
 import { AuthService } from '../../../core/services/auth.service';
+import { DateOnlyPipe } from '../../../shared/pipes/date-only.pipe';
 
 @Component({
   selector: 'app-girvi-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, ReactiveFormsModule],
+  imports: [CommonModule, RouterLink, ReactiveFormsModule, DateOnlyPipe],
   templateUrl: './girvi-detail.component.html',
 })
 export class GirviDetailComponent implements OnInit {

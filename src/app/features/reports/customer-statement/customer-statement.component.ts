@@ -2,6 +2,7 @@ import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { ReportsService } from '../../../core/services/rates-reports.service';
+import { DateOnlyPipe } from '../../../shared/pipes/date-only.pipe';
 
 interface StatementRow {
   date: string;
@@ -21,7 +22,7 @@ interface StatementResponse {
 @Component({
   selector: 'app-customer-statement',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, DateOnlyPipe],
   template: `
     @if (statement(); as s) {
       <div class="p-8 max-w-4xl mx-auto">
@@ -31,25 +32,25 @@ interface StatementResponse {
         <div class="card !p-0 overflow-hidden">
           <div class="overflow-x-auto">
             <table class="w-full text-sm">
-            <thead class="bg-brand-50 text-left text-xs uppercase text-gray-500">
+            <thead class="bg-brand-50 text-center text-xs uppercase text-gray-500">
               <tr>
-                <th class="px-4 py-2">Date</th>
-                <th class="px-4 py-2">Description</th>
-                <th class="px-4 py-2 text-right">Principal</th>
-                <th class="px-4 py-2 text-right">Interest</th>
-                <th class="px-4 py-2 text-right">Payment</th>
-                <th class="px-4 py-2 text-right">Balance</th>
+                <th class="px-4 py-2 whitespace-nowrap">Date</th>
+                <th class="px-4 py-2 whitespace-nowrap">Description</th>
+                <th class="px-4 py-2 whitespace-nowrap text-right">Principal</th>
+                <th class="px-4 py-2 whitespace-nowrap text-right">Interest</th>
+                <th class="px-4 py-2 whitespace-nowrap text-right">Payment</th>
+                <th class="px-4 py-2 whitespace-nowrap text-right">Balance</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody class="text-center">
               @for (row of s.rows; track $index) {
                 <tr class="border-t border-gray-100">
-                  <td class="px-4 py-2">{{ row.date | date: 'mediumDate' }}</td>
-                  <td class="px-4 py-2">{{ row.description }}</td>
-                  <td class="px-4 py-2 text-right">{{ row.principal !== '0' ? '₹' + row.principal : '—' }}</td>
-                  <td class="px-4 py-2 text-right">{{ row.interest !== '0' ? '₹' + row.interest : '—' }}</td>
-                  <td class="px-4 py-2 text-right">{{ row.payment !== '0' ? '₹' + row.payment : '—' }}</td>
-                  <td class="px-4 py-2 text-right font-medium">₹{{ row.balance }}</td>
+                  <td class="px-4 py-2 whitespace-nowrap">{{ row.date | dateOnly}}</td>
+                  <td class="px-4 py-2 whitespace-nowrap">{{ row.description }}</td>
+                  <td class="px-4 py-2 whitespace-nowrap text-right">{{ row.principal !== '0' ? '₹' + row.principal : '—' }}</td>
+                  <td class="px-4 py-2 whitespace-nowrap text-right">{{ row.interest !== '0' ? '₹' + row.interest : '—' }}</td>
+                  <td class="px-4 py-2 whitespace-nowrap text-right">{{ row.payment !== '0' ? '₹' + row.payment : '—' }}</td>
+                  <td class="px-4 py-2 whitespace-nowrap text-right font-medium">₹{{ row.balance }}</td>
                 </tr>
               } @empty {
                 <tr><td colspan="6" class="px-4 py-8 text-center text-gray-400">No activity yet.</td></tr>

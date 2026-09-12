@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { GirviService } from '../../core/services/girvi.service';
 import { GirviTransaction } from '../../core/models/api-models';
+import { DateOnlyPipe } from '../../shared/pipes/date-only.pipe';
 
 @Component({
   selector: 'app-girvi-receipt',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, DateOnlyPipe],
   template: `
     @if (transaction(); as t) {
       <div class="max-w-2xl mx-auto p-10 bg-white text-sm print:p-0">
@@ -18,9 +19,9 @@ import { GirviTransaction } from '../../core/models/api-models';
 
         <div class="grid grid-cols-2 gap-y-1 mb-6">
           <div><span class="text-gray-500">Girvi No:</span> {{ t.girviNumber }}</div>
-          <div class="text-right"><span class="text-gray-500">Date:</span> {{ t.pledgeDate | date: 'mediumDate' }}</div>
+          <div class="text-right"><span class="text-gray-500">Date:</span> {{ t.pledgeDate | dateOnly }}</div>
           <div><span class="text-gray-500">Customer:</span> {{ t.customer?.fullName || '—' }}</div>
-          <div class="text-right"><span class="text-gray-500">Due Date:</span> {{ t.dueDate ? (t.dueDate | date: 'mediumDate') : '—' }}</div>
+          <div class="text-right"><span class="text-gray-500">Due Date:</span> {{ t.dueDate ? (t.dueDate | dateOnly) : '—' }}</div>
         </div>
 
         <table class="w-full text-xs border border-gray-300 mb-6">

@@ -6,11 +6,12 @@ import { debounceTime, distinctUntilChanged, Subject, switchMap } from 'rxjs';
 import { GirviService } from '../../../core/services/girvi.service';
 import { GirviTransaction } from '../../../core/models/api-models';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
+import { DateOnlyPipe } from '../../../shared/pipes/date-only.pipe';
 
 @Component({
   selector: 'app-girvi-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, PaginationComponent],
+  imports: [CommonModule, RouterLink, FormsModule, PaginationComponent, DateOnlyPipe],
   template: `
     <div class="flex-1 flex flex-col min-h-0 p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto w-full">
       <div class="flex items-center justify-between mb-6 gap-3 shrink-0">
@@ -70,7 +71,7 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
             <tbody class="text-center">
               @for (t of transactions(); track t.id) {
                 <tr class="border-t border-gray-100 hover:bg-brand-50 cursor-pointer" (click)="openTransaction(t.id)">
-                <td class="px-3 sm:px-4 py-3 font-mono text-xs whitespace-nowrap">{{ t.pledgeDate | date:'dd-MM-yyyy' }}</td>
+                <td class="px-3 sm:px-4 py-3 font-mono text-xs whitespace-nowrap">{{ t.pledgeDate | dateOnly }}</td>
                 <td class="px-3 sm:px-4 py-3 whitespace-nowrap">{{ t.customer?.fullName || '—' }}</td>
                 <td class="px-3 sm:px-4 py-3 whitespace-nowrap">₹{{ t.loanAmount || '—' }}</td>
                 <td class="px-3 sm:px-4 py-3 whitespace-nowrap">{{ t?.totalPledgeMonths ?? 0 }}</td>

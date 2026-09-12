@@ -13,6 +13,7 @@ import { UploadsService } from '../../../core/services/uploads.service';
 import { CustomerSelectorComponent } from './customer-selector.component';
 import { SignaturePadComponent } from '../../../shared/components/signature-pad/signature-pad.component';
 import { Customer } from '../../../core/models/api-models';
+import { DateOnlyPipe } from '../../../shared/pipes/date-only.pipe';
 
 interface ItemPreview {
   netWeight: number;
@@ -33,7 +34,7 @@ interface MetalGroupPreview {
 @Component({
   selector: 'app-girvi-create',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, CustomerSelectorComponent, SignaturePadComponent],
+  imports: [CommonModule, ReactiveFormsModule, CustomerSelectorComponent, SignaturePadComponent, DateOnlyPipe],
   templateUrl: './girvi-create.component.html',
 })
 export class GirviCreateComponent implements OnInit {
